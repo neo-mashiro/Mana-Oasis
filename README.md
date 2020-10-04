@@ -4,3 +4,13 @@
 
 
 deploy the repo website in `docs/`
+
+
+
+
+
+
+
+# Reference
+
+- [Valve Handbook for New Employees](http://media.steampowered.com/apps/valve/Valve_Handbook_LowRes.pdf)
