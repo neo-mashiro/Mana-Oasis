@@ -1,7 +1,3 @@
-# Customized ignores
-.idea/
-References/
-
 # This .gitignore file should be placed at the root of your Unity project directory
 #
 # Get latest from https://github.com/github/gitignore/blob/master/Unity.gitignore
@@ -61,3 +57,15 @@ sysinfo.txt
 
 # Crashlytics generated file
 crashlytics-build.properties
+
+# Customized ignores (for copyright protection)
+#
+# This part must be placed at the bottom of the file
+# so that Unity standard ignores won't override them
+#
+.idea/
+References/
+Assets/3rd-Party/
+Assets/3rd-Party.meta
+Assets/Audio/
+Assets/Audio.meta
