@@ -1,0 +1,46 @@
+\contentsline {section}{\numberline {1}Game Overview}{1}{section.1}
+\contentsline {subsection}{\numberline {1.1}What is the game? (philosophy)}{1}{subsection.1.1}
+\contentsline {subsection}{\numberline {1.2}Why create this game?}{1}{subsection.1.2}
+\contentsline {subsection}{\numberline {1.3}Where does the game take place?}{1}{subsection.1.3}
+\contentsline {subsection}{\numberline {1.4}What do I control?}{1}{subsection.1.4}
+\contentsline {subsection}{\numberline {1.5}What is the main focus?}{1}{subsection.1.5}
+\contentsline {subsection}{\numberline {1.6}What’s different?}{1}{subsection.1.6}
+\contentsline {section}{\numberline {2}Feature Set}{2}{section.2}
+\contentsline {subsection}{\numberline {2.1}General Features}{2}{subsection.2.1}
+\contentsline {subsection}{\numberline {2.2}Multiplayer Features}{2}{subsection.2.2}
+\contentsline {subsection}{\numberline {2.3}Editor}{2}{subsection.2.3}
+\contentsline {subsection}{\numberline {2.4}Gameplay}{2}{subsection.2.4}
+\contentsline {section}{\numberline {3}The Game World}{2}{section.3}
+\contentsline {subsection}{\numberline {3.1}World Feature 1}{2}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}World Feature 2}{2}{subsection.3.2}
+\contentsline {subsection}{\numberline {3.3}Key Locations}{3}{subsection.3.3}
+\contentsline {subsection}{\numberline {3.4}Travel}{3}{subsection.3.4}
+\contentsline {subsection}{\numberline {3.5}Scale}{3}{subsection.3.5}
+\contentsline {subsection}{\numberline {3.6}Objects}{3}{subsection.3.6}
+\contentsline {subsection}{\numberline {3.7}Weather \& Climate}{3}{subsection.3.7}
+\contentsline {subsection}{\numberline {3.8}Day and Night, time}{3}{subsection.3.8}
+\contentsline {section}{\numberline {4}Rendering System}{4}{section.4}
+\contentsline {section}{\numberline {5}Camera}{4}{section.5}
+\contentsline {section}{\numberline {6}Lighting Models}{4}{section.6}
+\contentsline {section}{\numberline {7}Shaders}{4}{section.7}
+\contentsline {section}{\numberline {8}World Map}{4}{section.8}
+\contentsline {section}{\numberline {9}Game Characters}{4}{section.9}
+\contentsline {section}{\numberline {10}User Interface}{4}{section.10}
+\contentsline {section}{\numberline {11}Weapons}{5}{section.11}
+\contentsline {section}{\numberline {12}Player level System}{5}{section.12}
+\contentsline {section}{\numberline {13}Skill-tree System}{5}{section.13}
+\contentsline {section}{\numberline {14}Resources \& Items}{5}{section.14}
+\contentsline {section}{\numberline {15}Music \& Sound Effects}{5}{section.15}
+\contentsline {section}{\numberline {16}Multiplayer Chatting System}{5}{section.16}
+\contentsline {section}{\numberline {17}Quest System}{5}{section.17}
+\contentsline {section}{\numberline {18}Construction System}{5}{section.18}
+\contentsline {section}{Appendices}{6}{section*.2}
+\contentsline {section}{\numberline {A}User Interface}{6}{appendix.A}
+\contentsline {section}{\numberline {B}Multiplayer Network}{6}{appendix.B}
+\contentsline {section}{\numberline {C}List of Items}{6}{appendix.C}
+\contentsline {section}{\numberline {D}List of Weapons}{6}{appendix.D}
+\contentsline {section}{\numberline {E}Level System}{6}{appendix.E}
+\contentsline {section}{\numberline {F}Skill-tree System}{6}{appendix.F}
+\contentsline {section}{\numberline {G}Monsters}{6}{appendix.G}
+\contentsline {section}{\numberline {H}Quest System}{6}{appendix.H}
+\contentsline {section}{\numberline {I}World Map Collection}{6}{appendix.I}

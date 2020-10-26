@@ -1,0 +1,14 @@
+as the player, you lost your memories about your last life, find out who you are before you were born.
+
+find out the secret of this world.
+
+how to save and load? how to save checkpoint and game data?
+
+某些level中，比如在建筑物内，设置一些房间，使其场景是其他level的场景（并不是穿越到另一个level，只是把那个level相同的场景copy过来）。比如某个房间，打开门结果到了一个梦幻的世界郊外（有边界）。这样玩家下次到达真实的该场景时，会反应过来这个地方我来过（实际上不是同一个地方）。
+
+在地下城堡的古文书上写：你是否有这种经历？即现实中某个瞬间，突然觉得眼前的场景一定之前见过？这样的经历从小到大有过几次你还记得吗？如果每次你都有记录下来，有发现什么线索吗？
+
+道路素材，做成ground layer
+
+玩转粒子系统 best vfx
+

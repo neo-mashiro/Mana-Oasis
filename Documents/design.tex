@@ -1,0 +1,335 @@
+% ------------------------------------------------------------------------------
+% setup page layout
+% ------------------------------------------------------------------------------
+\documentclass[11pt]{article}
+\usepackage[a4paper, total={6in, 8in}]{geometry}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+
+\fancyhf{}
+\rhead{\thepage}
+\lhead{Mana Oasis}
+\chead{v1.0}
+
+\renewcommand{\footrulewidth}{0.1pt}
+\rfoot{\thepage}
+\lfoot{\textsc{Aria Company}}
+\cfoot{\raisebox{0.15ex}{\resizebox{!}{1.1ex}{\textcopyright}} 2020-2021}
+
+% ------------------------------------------------------------------------------
+% import packages
+% ------------------------------------------------------------------------------
+\usepackage{palatino}    % this is my favorite font
+\usepackage{amsmath}     % for math equations
+\usepackage{mathpazo}    % font and typeface for math
+\usepackage{graphicx}    % for handling figures
+\usepackage{subcaption}  % for handling subfigures
+\usepackage{float}       % for setting the float (for strict figure positioning)
+\usepackage{setspace}    % package that allows us to set the spacing for individual parts of the document
+\usepackage{hyperref}    % for hyperlinks
+\usepackage{listings}    % package that allows code in the document and offers source code highlighting
+\usepackage{color}       % support colors in source code highlighting
+\usepackage{appendix}
+
+\definecolor{darkgreen}{rgb}{0,0.6,0}  % define custom colors for later use in the document
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\usepackage{longtable}   % for multipage tables
+\usepackage{booktabs}    % for prettier tables
+\usepackage{multirow}    % enable a table cell to span multiple rows or multiple columns
+\usepackage{siunitx}     % for numbers in a table column to be aligned at the decimal point, formatting unit and style...
+
+\sisetup{                % specify how many decimal places should be displayed
+  round-mode = places,   % round numbers
+  round-precision = 2,   % to 2 decimal places
+}
+
+% ------------------------------------------------------------------------------
+% configure title page with logo
+% ------------------------------------------------------------------------------
+\title{%
+  Game Design Document (v1.0)\\
+  \vspace{5mm}
+  \Huge{Mana Oasis}\large\\
+  \vspace{10mm}
+  \includegraphics[width=\linewidth]{../Images/LogoTextGradient03.png}\\
+  \vspace{10mm}
+  \textsc{Copyright} \raisebox{0.15ex}{\resizebox{!}{1.1ex}{\textcopyright}} 2020-2021 \textsc{Aria Company}\\
+  \vspace{2mm}
+  \textsc{All Rights Reserved}
+  \vspace{5mm}
+}
+\author{\large{Created by Wentao Lu}}
+\date{\large{\today}}
+
+% ------------------------------------------------------------------------------
+% document main body
+% ------------------------------------------------------------------------------
+\begin{document}
+  \pagenumbering{gobble}
+
+  \maketitle
+  \newpage
+
+  \doublespacing
+  \noindent\fbox{
+    \parbox{0.465\textwidth}{
+        \begin{center}\Large\textsc{Contributors}\end{center}\normalsize
+        \noindent \href{https://github.com/neo-mashiro}{\color{blue}{neo-mashiro}} (author, developer, 3D artist)\\
+        \href{https://github.com/neo-mashiro}{\color{blue}{someoneelse}} (sound, music composer)\\
+        \href{https://www.google.com}{\color{blue}{fuyukonkon}} (alpha tester and translator)
+        \newline
+        \newline
+        \vspace{9mm}
+    }
+  }
+  \noindent\fbox{
+    \parbox{0.465\textwidth}{
+        \begin{center}\Large\textsc{Specifications}\end{center}\normalsize
+        \noindent {\color{blue}{Number of Players}}: 1 to 2 (Live Chat)\\
+        {\color{blue}{Hardware}}: Modern CPU + 4G Graphics\\
+        {\color{blue}{Builds}}: Windows 10, Ubuntu 16.04\\
+        {\color{blue}{Release Date}}: September 1, 2021 v1.0\\
+        {\color{blue}{Test Version}}: Unity 2019.4.11f on Win10
+        \vspace{8mm}
+    }
+  }
+
+  \vspace{8mm}
+  \begin{center}\Large\textsc{Disclaimer}\end{center}\normalsize
+  \vspace{1mm}
+  This software is licensed under GNU General Public License v3.0. It is only partially open-source (mostly scripts and documents) because some assets are purchased from the Unity Asset Store where permission of usage is granted by different licenses. This game is published on Steam and is completely free to play, but not for any commercial use. I am open to gameplay feedback so please feel free to let me know if you have any suggestions, ideas or bug reports. Currently it is still being actively developed to introduce more features, if you are interested in contributing to the project, don't hesitate to contact me.
+
+  \newpage
+
+  \setcounter{tocdepth}{2}
+  \renewcommand{\contentsname}{\textsc{Table of Contents}}
+  \tableofcontents{}
+  \newpage
+
+  \singlespacing
+  \pagenumbering{arabic}
+
+  % ----------------------------------------------------------------------------
+  \section{Game Overview}
+    \subsection{What is the game? (philosophy)}
+      Describe the game is a paragraph. This is the answer to the most common question that you will be asked. What are you working on?
+      discovery + fantasy + challenge(how?) adventure game that is narratively driven by various ACG artworks? virtual tourism, virtual construction, 3D Chat World, explore secrets?
+
+      set up goals and challenges for the player. 哲学启发式引导，用情感和文字的力量去引人入胜，后期音乐想办法问版权。可以阅读书籍的世界。故事主线为哲学思考和寻宝，找到世界的秘密，有各种提示和任务。
+
+    \subsection{Why create this game?}
+      Why are you creating this game? Do you love 3D shooters? Do you think there is a hole in the market for Jell-O tossing midgets?
+      incorporate what you wrote as your dream list on Zhihu.com
+
+    \subsection{Where does the game take place?}
+      Describe the world that your game takes place in. Simple as that. Help frame it in the reader’s mind by spending a few sentences on it here. You can go into lengthy detail later in a section solely dedicated to describing the world. Remember that we want to keep this part of the design light and readable.
+
+    \subsection{What do I control?}
+      Describe what the player will control. You will be in charge of a band of rabid mutant fiddle players. If you want you can switch on the AI and turn it into a fish bowl simulation.
+
+    \subsection{What is the main focus?}
+      Now that we know where the game takes place and what the player controls. What are they supposed to achieve in this world? Angry fiddle players take over the U.N. building. Be careful not to add a bunch of salesmanship here. Your design wants to stay light and informative.
+
+    \subsection{What’s different?}
+      Tell them what is different from the games that are attempting this in the market right now. This question comes up a lot. How is this game unique? What differentiates it from other games?
+
+  % ----------------------------------------------------------------------------
+  \section{Feature Set}
+    \subsection{General Features}
+      \begin{itemize}
+        \item Huge world
+        \item Mutant fiddle players
+        \item 3D graphics
+        \item 32-bit color
+      \end{itemize}
+
+    \subsection{Multiplayer Features}
+      \begin{itemize}
+        \item Up to 10 million players
+        \item Easy to find a game
+        \item Easy to find your pal in huge world
+        \item Can chat over voice link
+      \end{itemize}
+
+    \subsection{Editor}
+      \begin{itemize}
+          \item Comes with world editor
+          \item Get levels from internet
+      \end{itemize}
+
+    \subsection{Gameplay}
+      \begin{itemize}
+          \item List stuff here that is key to the gameplay experience
+          \item How to save and load, is replay possible?
+          \item Hey, if you got nothing here, is this game worth doing?
+      \end{itemize}
+
+  % ----------------------------------------------------------------------------
+  \section{The Game World}
+    \subsection{World Feature 1}
+      This section is not supposed to be called world feature 1 but is supposed to be titled with some major thing about the world. This is where you break down what is so great about the game world into component pieces and describe each one.
+
+    \subsection{World Feature 2}
+      Same thing here. Don’t sell too hard. These features should be awesome and be selling the game on its own.
+
+    \subsection{Key Locations}
+      Some things go here.
+      \begin{itemize}
+          \item Some things go here.
+          \item Some things go here.
+      \end{itemize}
+
+    \subsection{Travel}
+      Describe how the player moves characters around in the world.
+      \begin{itemize}
+          \item vehicle? a car? a dragon? a brook? a magic portal?
+          \item Some things go here.
+      \end{itemize}
+
+    \subsection{Scale}
+      Describe the scale that you will use to represent the world. Scale is important!
+      \begin{itemize}
+          \item Some things go here.
+          \item Some things go here.
+      \end{itemize}
+
+    \subsection{Objects}
+      Describe the different objects that can be found in the world. See the “Objects Appendix” for a list of all the objects found in the world.
+      \begin{itemize}
+          \item Some things go here.
+          \item Some things go here.
+      \end{itemize}
+
+    \subsection{Weather \& Climate}
+      Describe what sort of weather will be found in the world, if any. Otherwise omit this section. Add sections that apply to your game design.
+      \begin{itemize}
+          \item Some things go here.
+          \item Some things go here.
+      \end{itemize}
+
+    \subsection{Day and Night, time}
+      Does your game have a day and night mode? If so, describe it here. Describe the way time will work in your game or whatever will be used.
+      \begin{itemize}
+          \item Some things go here.
+          \item Some things go here.
+      \end{itemize}
+
+  % ----------------------------------------------------------------------------
+  \section{Rendering System}
+    Give an overview of how your game will be rendered and then go into detail in the following paragraphs. Describe what sort of 2D/3D rendering engine will be used.
+
+  % ----------------------------------------------------------------------------
+  \section{Camera}
+    Describe the way the camera will work and then go into details if the camera is very complicated in sub sections.
+
+  % ----------------------------------------------------------------------------
+  \section{Lighting Models}
+    Give an overview of how your game will be rendered and then go into detail in the following paragraphs. Describe what sort of 2D/3D rendering engine will be used.
+
+  % ----------------------------------------------------------------------------
+  \section{Shaders}
+    Give an overview of how your game will be rendered and then go into detail in the following paragraphs. Describe what sort of 2D/3D rendering engine will be used.
+
+  % ----------------------------------------------------------------------------
+  \section{World Map}
+    A world map that can be opened by a hotkey. If play hits xxx, she can discover the name or tag of an item or building.\\
+    The world map is divided into many small sub continents/islands, each may have one or more scenes/levels.
+    ARIA, RO, MapleStory, FO, FO II, each level/scene has a minimap.
+
+  % ----------------------------------------------------------------------------
+  \section{Game Characters}
+    Introduce your character, what she can do and the story. Describe enemies or monsters in the world or whomever the player is trying to defeat. Naturally this depends heavily on your game idea but generally games are about trying to kill something. Where are the monsters?
+
+  % ----------------------------------------------------------------------------
+  \section{User Interface}
+    Provide some sort of an overview to your interface and same as all the previous sections, break down the components of the UI below.
+
+  % ----------------------------------------------------------------------------
+  \section{Weapons}
+    Overview of weapons used in game. a magic stick
+
+  % ----------------------------------------------------------------------------
+  \section{Player level System}
+    player level system, what does level up lead to?
+
+  % ----------------------------------------------------------------------------
+  \section{Skill-tree System}
+    skill tree system, what kind of skill or superpower you wish you could have? fly? magic? how to learn magic? using alchemy and raw materials?
+
+  % ----------------------------------------------------------------------------
+  \section{Resources \& Items}
+    balance the game world economy, how much to be earned, how things are priced.
+    collect items? what items may be interesting?
+    points earned (money \& tokens), badges and rewards, tokens to visit other's worlds
+
+  % ----------------------------------------------------------------------------
+  \section{Music \& Sound Effects}
+    Talk about what sort of sound APIs you are going to use or not use as the case may be.
+
+  % ----------------------------------------------------------------------------
+  \section{Multiplayer Chatting System}
+    Is your game client-server or peer-to-peer or whatever. Describe what gaming sites you want to support and what technology you intend to use to achieve this. Perhaps Dplay or TCP/IP or whatever. It is probably a good idea to break the tech stuff out into a separate area, you decide. Describe if your world is persistent or not.
+
+  % ----------------------------------------------------------------------------
+  \section{Quest System}
+    create stories. a separate GUI for quests. use progression bar and hints, guides, feedbacks.
+
+  % ----------------------------------------------------------------------------
+  \section{Construction System}
+    The player can create their homes or mana oasis by themselves, but they need mana to do so. This system is very hard but may be rewarding.
+
+
+%   ------------------- best practices -----------------------
+% assets that do not move at runtime (wall, buildings, etc.) must be set to STATIC status!!!
+% Import third-party assets in a clean manner
+% Document your setup (Tag uses, Layer uses, etc.)
+% Put all your code in a namespace to avoid conflicts
+% If you have a lot of text, put it in a file. (storytelling)
+% Use property drawers to make fields more user-friendly.
+% Separate interface from game logic.
+% Use state machines to get different behavior in different states
+% make the project structure clean and neat, separate modules (main scripts)
+% input controller, player controller, game state manager(menu, inplay, quit, pause...), skill tree system, quest system...
+% optimize performance
+
+%   ------------------- bonus -----------------------
+% how to utilize the power of AI and machine learning in your game?
+% customize the splash screen with my own game logo and title + visual effects (don't wait until your Pro subscription expires in 2021.September)
+
+
+  % ----------------------------------------------------------------------------
+  \newpage
+  \appendix
+  \appendixpage
+  \addappheadtotoc
+
+  \section{User Interface}
+    ...
+
+  \section{Multiplayer Network}
+    ...
+
+  \section{List of Items}
+    ...
+
+  \section{List of Weapons}
+    ...
+
+  \section{Level System}
+    ...
+
+  \section{Skill-tree System}
+    ...
+
+  \section{Monsters}
+    rank from level 0
+
+  \section{Quest System}
+    ...
+
+  \section{World Map Collection}
+    ...
+
+\end{document}
