@@ -58,11 +58,14 @@ sysinfo.txt
 # Crashlytics generated file
 crashlytics-build.properties
 
+
+# --------------------------------------------------
 # Customized ignores (for copyright protection)
-#
+# --------------------------------------------------
 # This part must be placed at the bottom of the file
 # so that Unity standard ignores won't override them
-#
+# --------------------------------------------------
+
 .idea/
 References/
 Assets/3rd-Party/
