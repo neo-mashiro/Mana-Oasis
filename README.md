@@ -3,8 +3,7 @@
 ![GitHub repo size](https://img.shields.io/github/repo-size/neo-mashiro/Mana-Oasis?color=g&label=Total%20Size&style=plastic)
 ![GitHub license](https://img.shields.io/github/license/neo-mashiro/Mana-Oasis?label=License&style=plastic)
 
-Statistics API:  
-https://api.github.com/repos/neo-mashiro/DOC
+**Statistics API**: https://api.github.com/repos/neo-mashiro/DOC
 
 3D reconstruction of my imagination world...
 
