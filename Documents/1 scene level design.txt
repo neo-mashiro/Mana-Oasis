@@ -1,0 +1,72 @@
+Reference文件夹下面的所有
+
+旋转木马 摩天轮 白沙滩 迷宫宫殿 红地毯 古典旋转楼梯 宴会大厅 大型空荡音乐演奏厅 魔法大门 世界树 水果乐园 甜点天堂 时光倒流回廊 烛光餐厅 东方神殿 女神像圣地 天空之城 通天塔 玩具世界 彩虹村 能量圈 传送门 时钟楼 深海神殿 黄金废墟 魔法树林 古代遗迹 星光宇宙 银河楼梯 古书库 宝石走廊 粉墙白幕布少女卧室 风铃西瓜冰镇饮料海边咖啡厅
+
+各种galgame的精美CG 场景CG
+pink home
+圣魔之血的那个画面
+niccori魔法使的咖啡厅，巧克力，甜点
+可塑性记忆的夜晚游乐园
+kamakura
+道路素材，做成ground layer
+玩转粒子系统 best vfx
+世界七大奇迹 宇宙奇观 各种自然奇观（双彩虹，极光，海市蜃楼，morning glory云彩，火焰龙卷风，超大的星球月亮等等）
+glacier crevasse，蓝洞
+推特上那个animetic照片的摄影师的作品，kagaya的作品
+UFO飞碟，三个用parent-child关系悬空连在一起，有红色的灯闪光亮着和飞机一样，飞碟有自己的重力场，相当于一个重力球，靠近一定距离后玩家就不受地面重力控制了。三个飞碟只有中间那个是主飞碟，用来载客的，两边的两个飞碟与之成一定角度旋转（像盘子在桌子上打圈一样），从而产生磁场提供动力。
+湖边的很长的连排的木制栈道，像是木头版本的外滩一样，每隔一段距离护栏下都有地面台灯，连起来形成夜景美丽浪漫的湖畔景色。
+美丽的城市夜景，tower mansion，雪乃家的内室，全画幅透明玻璃窗，bird view俯瞰整个城市灯火。
+
+Port Lavina  // 专门存放二次元美女梦中情人完美女神的 高分辨率图片展示美术馆 是一座很高的灯塔 层数很高 黑雪姬 亚斯娜 Gift白丝！。。。
+
+***DJ Master       // 做一个中小型的DJ音乐厅用来播放动漫音乐，玩家可以自己导入电脑本地的音乐CD听，可作为KTV使用
+***Octave Land     // 做一个大型的专业音乐厅大剧院，有超赞的音响配置和灯光效果和回声，一个人的空荡大剧院，带舞台和幕布和大屏幕。
+以上两个场景，加上一个屏幕，用来展示音乐可视化效果，这是个亮点功能，类似于网易云app的可视化动态音效，有几种主题可以选，颜色和粒子特效很炫酷。
+实现方式参考这里：https://zhuanlan.zhihu.com/p/92971717 （代码读取音乐频域的数值，写入一张256像素宽度的贴图，最后配一个shader）
+
+1991/12/26
+
+
+オトメ＊ドメイン RADIO＊MAIDEN  等到有钱了以后去买全卷16CD收藏，作为日语口语练习，和ARIA蓝光碟+新作一起！！！
+
+===================================================
+
+关于save load和login logout的场景，做一个独立的虚无空间，用类似时空宇宙和黑洞做skybox，就是很小的场景，入口是一个传送门，通过一座架空的桥梁通往前方几百米的一个大祭坛，祭坛要做的大一点壮观一点，差不多和篮球场那么大。玩家在游戏中选择save的时候，就将玩家和画面切换传送到该场景的传送门处，然后玩家需要跑到祭坛的地方触发祭坛里的魔法球，选择save则游戏数据会被保存，可能会需要两三秒时间，这期间展示魔法球的动画表示正在save，save之后玩家可以跑回入口处，通过传送门回到之前在游戏内的场景和坐标，也可以在魔法球处选择exit游戏，点了exit后魔法球释放另一个效果，然后退出游戏。
+玩家每次login进入游戏的时候，都会出现在祭坛的地方，这是进入mana-oasis的主入口，然后不能动，必须要在魔法球里做一个选择，要么开始新游戏，要么load之前的某个存档，load当然也有伴随的魔法球特效，load之后就可以动了，再跑到传送门进入该存档。save load当然是通过序列化来完成的，存储到本地的数据库或者云端，存档的上限设置为7，最多只能有7份存档。
+如果是new game的话，通过传送门进入的第一个场景就是Restopia，初始坐标为Restopia的传送门。注意传送门永远是成对出现的，in pair，不能单独存在。Restopia是一座浮游岛，有自己的白天黑夜skybox，并不总是黑夜。只有save load的虚无空间是极夜。
+
+collider会自动判断碰撞而触发物理，因此collider无法重合，OnCollisionEnter(), OnCollisionStay(), OnCollisionExit()可以实现除了碰撞以外的逻辑，但是碰撞的物理法则本身无法避免和取消，无法重合。
+而trigger(叫sensor更准确)只会在检测到碰撞时发出一个信号，需要开发者自己用OnTriggerEnter去捕捉到信号并做处理，不过这也给了我们更大的自由度。比如场景里的房子，就可以设置一个范围稍大的trigger，当玩家碰撞到trigger后，则认为她可能会要进入房子，因此就可以预先load房间内部的场景了，同时还可以做一些物理法则做不到的事情，比如穿透墙壁。OnTriggerEnter(), OnTriggerStay(), OnTriggerExit()
+
+通常都是选择加一个刚体，来自动实现物理法则。除非你想完全自由的自己控制一个物体的运动，或是让它违反物理法则，那么这个时候就要用kinematic自己处理了。kinematic只是用来指明go的运动是否受physics引擎控制，与该物体属于哪种collision是完全两回事，不要混在一起。不管是不是kinematic，都有normal和trigger这两种collision模式。比较复杂的是，我们要搞清楚哪些场景下collision会触发什么事件，这个具体参考官方文档的collision矩阵，以及在project settings的Collision Matrix config中进行设置。
+
+1. 对于scene的environment，场景的地形石头建筑物墙壁什么的，确定不会移动：
+static，no rigidbody，不规则草木什么的用convex mesh collider否则用primitive collider, non-trigger，non-kinematic
+由于这些是static collider，没有刚体，所以OnCollisionXXX不会在这些物体上触发，要从另一方collider（移动的character）判断。从Unity5开始，static collider在scene中移动也不会再有performance惩罚了，所以动态的草木也可以是static的。
+
+2. 对于scene的非环境物体，可以被受力和移动的，比如地上一个箱子：
+非static，标准刚体，标准collider（非kinematic非trigger），尽量用primitive（实在复杂用convex mesh），必要时可以挂脚本处理OnCollisionXXX。
+
+3. 对于门这种，平时是静止的，必要时又要动的；或者是台灯这种有switch开关的物体，平时是静止的，必要时要on/off的
+非static，标准刚体，Kinematic collider，非trigger，挂脚本处理OnCollisionXXX来控制移动，或者是播放移动的动画，或是开灯。只要脚本里没有移动该物体，该物体就会保持静止。
+
+4. 对于有动画的骨骼人物或怪物，用compound primitive colliders，具体用Ragdoll Wizard来生成。
+非static，不同身体部位有单独的刚体，默认都是Kinematic collider（为了动画），非trigger。挂脚本处理OnCollision，如果是被车撞飞什么的，要在代码里把IsKinematic设成false，使其成为一个正常的受physics影响的物体，落地后再设回true，具体分情况处理。
+过程参见https://learn.unity.com/tutorial/creating-ragdolls-2019#5e1c555dedbc2a0410472a3b
+但是问题是，kinematic rigidbody collider没有办法和static collider碰撞，所以玩家可以随意穿墙钻地，一个解决方案是在character外面再套一层正常的刚体collider（capsule），不过要保证玩家的身体组织kinematic collider不会和这个自己的刚体collider碰撞，第二个解决方案是在project settings的physics中设置enable kinematic static pairs，然后在玩家的脚本里处理OnCollisionXXX，再有的解决方案就非常复杂了，涉及到具体怎么实现一个更高级的controller，这个去参考商店的付费素材研究。character controller做好了以后，再加上root motion和inverse kinematics，完成到一个流畅的程度，然后再看下官方文档关于performance优化这一块，不要让player占据太多内存，最后在商店购买Dynamic Bone插件，对character的服饰挂件和头发添加physics，使得头发什么的能随着玩家animate而实时的逼真的动态效果。
+玩家的骨骼动画有基本的动作就可以了，不要试图什么都模仿现实，太复杂了，有基本的走跑坐站躺吃喝+表情、扭头、攻击、防御、施法等动画即可，其他手臂和手的动作比如现实里拿东西什么的这种不要一个个做，太多了，可以只做一个滑动和点击菜单的动画，作为通用的动作，然后呢，具体的是拿东西也好切菜也好拧瓶盖也好发动汽车也好，都用游戏中的全息图像投影出的UI菜单来代替，UI里列出可操作的动作按钮，character只要去滑动和点击按钮即可。有个例外是开门关门，因为这个动作太普遍了，自己做动画，但是由于各种门把手形状都不同，所以折衷一下就做个类似手推的意念施法动作来开关门。
+只要在unity的settings中设置好玩家layer和其他layer的collision matrix，KCC的motor就会自动去判断哪些layer可以碰撞，不用操心。有特殊情况的collider的话，在playerController的Misc中设置IgnoredColliders就行了。记住，玩家的IgnoredCollider和相机的IgnoredCollider是分开的，要分别设置。
+
+一个灵活的玩家controller都是kinematic的，这样才有更高的自由度能游泳能爬梯子，但是kinematic的意思是告诉Unity不要用PhysX，所有的物理我都自己处理，哪怕玩家走进墙内了我开发者也是知道的，我会自己处理不用你PhysX操心，这些需要非常高超的编程技术。现阶段先用一个简单的capsule collider代替玩家，把世界架构搭出来，后期再处理character。注意一点，由于玩家character本身（或玩家身上的某个child刚体）是要挂载FPS或TPS相机的，为了保证相机跟随的流畅，玩家人物的motion必须要非常平滑，所以要把被挂载的刚体的interpolate设置打开，使其能用插值平滑推断每一瞬间的position，并且相机要在LateUpdate中更新，这样就不会有jitter卡的情况了，起码build了以后不会，事实上，相机就用Cinemachine就好了（cm的collider extension，把collide against设成environment的layer，并不是什么障碍物都要forward相机的，然后ignore player tag），对于驾驶车辆的FPS/TPS，记得在Cinemachine里加上噪音来模仿车的小颠簸，还要记得另外加两个小相机，一个是导航地图minimap，还有一个是反向的用来渲染车辆后视镜（左右都加），如果是行驶中碰到障碍物或路上的凸起，车辆的刚体会自动触发物理碰撞，导致比较大的颠簸，这个效果不要用噪音做，而是用Cinemachine Impulse来实现，具体参考文档和example的scene，爆炸导致相机shake也这么做。
+
+5. 对于需要检测玩家是否进入范围的，但是可以穿墙的，比如invisible的边界，用static trigger collider，不加刚体，用onTriggerEnter检测。
+
+7. collider设置好之后，加上Physic Material按不同的物体材质设置，同一个刚体可能有多个collider，每个collider可以单独设置那部分的physic material，或者直接把Physic Material放在刚体上，那么所有的collider都会用同一个Physic Material。注意，两个go相撞时，不一定要两边都加上Physic Material，只有其中一方有也可以的，没加的那一方相当于是用的系统默认的physic material，也就是弹力为0，摩擦力为0.6。如果不是特殊的材质比如冰面这种，不用特意去加，冰面摩擦力为0，橡胶弹力为1摩擦力为1，水中的河床摩擦力为1，其他的基本上不用改，弹力很少会用到的。
+
+8. 当collision发生时，如果物体的移动速度极快，同时又是用PhysX引擎控制的（非kinematic），控制碰撞反弹的逻辑可能会跟不上，所以引擎的fixedUpdate还会更新几帧，会导致物体的一部分穿进墙内，这时候要在rigidbody的constraints设置下面freeze掉position（如果希望物体slide滑动那么rotation也freeze掉），物体就绝不会穿墙了。只有在处理特别高速的物体时才需要设置这个，比如赛车什么的，一般不用。而kinematic这种自己代码控制的物体，与此无关。此外记住，这种physX控制的运动，只要是每帧更新的东西都要写在fixedUpdate方法里，比如用Time.deltaTime每一物理帧更新位置什么的（千万别用Time.fixedDeltaTime，那是常数而不是delta时间），而Update方法里只用来判断玩家Input，根据逻辑一次性地AddForce，或是设置一次性的初始速度。再比如，控制物体弹跳，如果收到Input的空格键了，就在update里设一下jump的flag为true，但不要去真的去调用jump，真正的jump要放在fixedUpdate里来做，做之前把flag设回false。
+为什么要用FixedUpdate呢？想象一下，如果FPS很低，Update更新的很慢，一个刚体的移动要是在update里更新，自然也会随之变慢，不符合realistic的物理法则，而fixedUpdate每0.02秒跑一次，无视游戏的FPS，这样物体运动才更合理，这种情况下，由于update很慢，update更新一次时，fixedUpdate已经更新很多次了，而每个frame是跟着每个update进行render的，所以update渲染的只会是经过多次fixedUpdate后的那个最终结果。但是如果update和fixedUpdate速度差太多，每次render的时候fixedupdate都已经更新了很多次，物体移动了很远的距离，在渲染时就会感觉物体每帧是在瞬间移动，就和网络lag的时候画面卡一样，这时就必须要优化FPS，如果不是FPS的问题而是物体本身就是移动太快了（或者你为了精准物理而手动把Time.fixedDeltaTime设置的特别小），那怎么办呢，简单，在rigidbody下面找到Interpolate的设置并选上interpolate（一般不用extrapolate选项，那个是用来猜测物体移动位置的，只有当物体固定方向匀速稳定运动时才会用），让physX自动的线性插值平滑，只不过这时你在画面上看到的物体的移动更新实际上是比真实的physX更新要滞后的。
+
+检测collision最有效的办法是，对不同的物体进行归类并标注自定义的layer，并在项目中设置好哪些layer之间需要检测碰撞。用layer的好处是unity会自动过滤掉不相关layer的go，大幅度提高性能。这比起通过go的tag来检测要快好几倍，因为tag是需要做字符串比较来判断的。
+另一个优化是，保证collider是比较简单的，通常是把children上的primitive组合起来成为compound collider，哪怕实在要用mesh collider也要设置成convex。要知道，Raycasting against a mesh collider is really expensive. 在使用raycast检测碰撞时，提前规定好射程，不要用mathf.Infinity，并且，Be specific on what the ray should hit and always try to specify a layer mask on the raycast function.
+
+Non-kinematic rigid bodies will ignore the hierarchy. If you make one rigid body a child of another and translate the parent. Then the child will NOT move with the parent. The child’s transform will update so that it remains in place in world space. If you want to couple rigid bodies you need to use joints.

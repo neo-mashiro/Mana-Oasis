@@ -70,5 +70,7 @@ crashlytics-build.properties
 References/
 Assets/3rd-Party/
 Assets/3rd-Party.meta
-Assets/Audio/
-Assets/Audio.meta
+Audio
+
+# temporarily ignore all scenes
+*.unity

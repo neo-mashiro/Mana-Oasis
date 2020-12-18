@@ -1,0 +1,15 @@
+- Idiom preferences, project folder structure
+- Explain Hierachy structure (e.g. Environment - Terrain should be mostly static)
+- Script details (introduce what each folder contains, see above)
+- coding standards (see above)
+- Layer uses (for collision, culling, and raycasting – essentially, what should be in what layer).
+- Tag uses.
+- GUI depths for layers (what should display over what).
+- Animation layers and Animation frame related information.
+- Naming Standard !!!!!!!!!!!!!!!!!!!!!!! (Be consistent and do not use abbreviations, prefix temporary objects with __)
+
+在项目网页html的最后，不要忘了credit那些参考的教程和视频，把Blender，UGuru，Jason，Brackeys，Jasper Flick，还有那个utility库的作者，都写在Special thanks的感谢栏里，并给出他们的教程和视频链接等等
+
+
+a small part of the spectrum of relevant topics
+induce their players to dedicate long hours in pursuit of a distant goal

@@ -1,0 +1,78 @@
+找工作时，去掉没用的金融内容，补上游戏的，比如说自己对GPU如何如何了解，对compute shader非常熟练，HLSL经验丰富，在写parallel算法方面有扎实的基础。把technical skills那一栏精简化成更pro的形式，不要写什么proficient in experience with之类的修饰词，直接列举就好了，比如programming languages: Oracle PL/SQL, Python, C#, Go, Lua, C，按熟练程度排序。Go+Lua现在开始学。
+
+1. Mark and highlight the whole Unity Manual = twice! twice!
+2. overview and skim all scripts in the Unitywiki scripts section, also highlight
+3. 整理github utilities的library
+
+目前阶段还在探索，先用DRP完成一切雏形，基本成型了以后，再把项目升级为HDRP，参考官方upgrade指南。画质和素材调优什么的，后期统一做，现在先focus在Unity开发本身上以及写脚本上。
+
+游戏内做一个键盘自定义的功能，玩家可以自行更改某些功能的hotkey，画一个模拟的键盘，玩家可以拖动不同的键。
+劲乐团！！！！！！在游戏内做一个劲乐团出来！！！！七个按键的！！！3D版本的！！！单独做个场景加载，为了键盘反应的性能。
+
+关于FPS/TPS controller，对应的Jasper Flick的Movement系列的教程比较难，需要专门花一周多时间，这块先放着，最好先等买了那个素材然后试着写一写自己的controller，然后再回过头来看会理解地更快一些，整合到自己的代码里去，最后再把wiki页面上的CharacterController和Physics部分的脚本过一遍整合进来。相机不要钻研太细，TPS就把Cinemachine玩透了就OK，FPS就直接挂人物头上。
+
+登录界面+登录音乐，以故事的形式进入游戏，主题是，来寻找到“我”吧，被选中的人。“我”是谁？其实我就是这个世界，你存在的同时，我也在凝视着你，“我”是你的人生价值。无论在游戏还是现实世界，人只活一次，真正有意义的，是去寻找mana，寻找爱的回忆，所以才叫做mana oasis。mana是一切的基础和重点。
+
+游戏入口的场景是玩家拥有的一座城堡，是老家就叫做mana-oasis，城堡很壮观，有多栋楼，每栋楼可以有无限层，每层都有各自的设施房间，比如83层是音乐厅，26层是豪华会客餐厅，38楼有大浴场，每层有一个专属负责的女仆。城堡是一个大型的场地，按照不同的楼分为几个区块的，每个区块有个总领女仆。在地面那层，楼与楼之间的空白区域是城堡的中庭，场景就用圣魔之血的那个广场，在比较高的空中层，楼与楼之间可以用回廊的形式连接起来，还可以有露天的空中庭院。最后城堡有一块后庭，有许多时空隧道通往其他大陆异世界浮游岛，隧道是异次元空间。想好城堡的边界是什么，如何控制玩家不出圈，边界做成怎么样的风景比较合理，skybox为永远的黑夜，想好合理的故事解释背景场地解释，想好玩家登录时从哪里降落，也就是城堡的入口在哪里。
+
+how to save and load? how to save checkpoint and game data? UI system.
+when working with UI or inventory, we need to pause the game sometimes (if single player mode). How to pause the game that meet your needs? This can be very tricky, be sure to study this:
+https://gamedevbeginner.com/the-right-way-to-pause-the-game-in-unity/
+
+画面左上角做一个游戏内的console，可以输入console命令做设置？可能需要用到SendMessage？这个console的功能一方面是给玩家提供游戏内高级设置，一方面我可以用来作为GM super user的测试窗口，通过输入秘籍指令灵活地调节一切游戏数据，玩家等级什么的，这样可以方便testing。
+
+关于Inventory，所有的Item都要定义成enum类型，比字符串要效率的多。至于玩家具体的背包和库存，用Dictionary来存储Item:Amount的键值对，便于查找。通常，玩家都希望自己的库存是有固定顺序的，可以自定义分类，所以最好用OrderedDictionary有序的实现。这样也方便可以一键点击自动重新排列。
+
+所有的assets，要打包起来成为assetBundle，用最新的工具Unity Addressable Asset system管理，保证内存会自动释放不必要的素材，否则所有被reference过的素材材质都会一直堆积在内存里最后crash。
+
+Cinemachine可以用来做timeline动画衔接多个virtual相机，可以考虑用于制作剧情中的平滑的cut scene（用多个虚拟相机）。先把场景人物搭起来，然后再去做一些cutscene作为场景衔接动画，以及片头动画。
+
+用scriptable object来生成批量的gameobject，对于UI的图标什么的尤其有用。这种方式生成的每个go都是customized的，带有不同的属性。而对象池和它的区别是，对象池是为了性能原因提前生成go，cache在内存中方便反复使用，池子里每个go都是一模一样的基于同一个prefab生成。但scriptable object不是为了性能，而是为了开发的方便，给一群类似的go设计一个可以作为基础的模板，并没有放在cache里，且每个衍生出来的go都有各自的特色，当然也可以一样。在很多场景中，我们可以把scriptable object和对象池结合起来，配合使用达到需要的效果。
+
+Cinemachine Brain的update method就用默认推荐的SmartUpdate就可以了，一般不会卡，除非出现了jitter（几乎不会）。smart在大多时候都是用LateUpdate的，确保物体全部移动好了再更新相机位置，除非target是一堆刚体在动画（比如带刚体的非kinematic NPC），且动画特别快幅度大特别复杂，这种情况下每次LateUpdate会有很多次FixedUpdate且动画幅度大，所以用FixedUpdate更准，否则动画可能会掉帧。正常游戏里不会有那么复杂的动画的。（记住LateUpdate是在所有update包括fixedupdate之后的）
+Cinemachine Brain的最后一个toggle项Camera Activated Event，用于当两个虚拟相机blend切换时在第一帧触发自定义事件，该事件是个继承了UnityEvent类的自己写的C#的class脚本（参考CinemachineBrain的第113行源码）。比如两个NPC A和B对话，可以用来在切换AB的follow相机时blend的第一帧触发显示台词的对话框。（或者也可以在每个virtual相机的transitions选项中的OnCameraLive添加事件，也就是当该相机live的时候，也就是blend的最后一帧，其实这样效果更好，镜头对准了再显示对话框）
+
+和女仆的对话窗口用Live2D插件来实现
+
+TO-DO-LIST：Cinemachine用的好的话，和Timeline两者完美结合，是可以用来做出很赞的film电影的，利用各种相机平滑切换，配合storyboard和BGM平滑切换。这块暂时不深究，但这是个亮点可以用来制作电影剧情。比如ARIA的场景，不光是让玩家自己自由以第三视角探索，而是制作一段小电影配上合适的BGM，试图来还原ARIA动漫原作中的一些感人怀旧场景，是非常不错的。再比如可以用来当做场景的intro片场finale片场以及中间剧情过场动画，比如当玩家发现某个幸福的宝藏时，进入某个场景时，先禁用玩家Input，播放一段上帝视角的预览动画，用音乐和情感色彩去渲染那种意境，让玩家更容易入境。对于静态的场景，可以在scene中手动设置dolly paths，也就是一系列的waypoint轨道，让相机沿着轨道移动，从而实现手持相机拍摄的效果。参考package自带的sample场景模仿就行了。
+
+用Cinemachine Confiner extension来控制TPS相机的边界，到了边界玩家还可以往前走但相机就不能了，所以玩家的背影越来越远，达到一定距离以后就可以切换场景了，用这个做场景切换的效果。所以也就是说，这个相机的confiner是个矩形，矩形的长宽要比scene的大小稍微小一圈，相差的那一圈也就是相机会看着玩家渐行渐远的那段距离。
+
+如果是在PS4 XBOX这种console上玩的话，电视屏幕要大的多，必须要把相机的FOV调到100以上，测试完了再build。如果是VR设备的话，要更大才行，这个就比较复杂了现在不考虑，有些VR会自动重新计算FOV的。
+
+游戏中设计几个观察者视角的场景活动，比如斗兽场里看女巫们对打，赌谁赢的画面，涉及到多个物体同时移动。然后用Cinemachine Target Group来实现同时让相机look at所有的女巫，随着战斗进行，女巫数量逐渐减少，相机就会自动zoom in。这是唯一可以实现look at多个物体保证在屏幕内的。
+
+场景切换时要换BGM，利用音量逐渐减小fade的切换方式，用Timeline来实现。也可以用coroutine。
+
+跑车移动的时候，后面加上trajectory render和nitro能量特效。
+
+Calendar里面的日出日落月出月落函数，每天凌晨0点批处理时运行获取，用于schedule接下来的事件，比如触发Restopia城堡内的主钟声和钟摆动画。
+GetManaDate用于在UI里显示当前Mana世界的时间，可以做全息日历什么的。
+GetManaSeason获取季节，动态地调整地形的天气效果。Restopia之外的某些地图对此invariant，有独立的天气。
+GetManaTime获取一天的时间段，如早晚中午等，根据这个时间段来调整Restopia内的mana浓度，午夜达到极值，某些场景的特殊魔法功能需要一定浓度才能触发。
+
+电视机或电脑的屏幕，或者一些大屏幕的动态渲染，是用相机实现的。把camera的view投影在一个render texture上，然后把这个texture挂载到电视屏幕上或者一块石板上，该相机的view就都会显示在那个texture所挂载的gameobject上。相当于是创建一个可以播放camera view的动态texture。
+
+用[NonSerialized] to make sure a variable state is reset to default on game state change. 如果一个变量比如motor里的groundingStatus，每一帧都在变化更新，同时它又是一个public变量需要在其他class里被访问的，就用NonSerialized，此时unity不会去序列化它，会让它每帧更新，而序列化通常代表着这个变量的值在play的时候就固定了不变了。换句话说，一个每帧不停在变的值不能被序列化，序列化只适用于runtime相对恒定的变量，通常一个每帧在变的值都是private变量，默认是NonSerialized的，偶尔这个变量又需要被其他class访问，所以是public，这时就要加上NonSerialized。其他的情况用HideInInspector.
+
+某些level中，比如在建筑物内，设置一些房间，使其场景是其他level的场景（并不是穿越到另一个level，只是把那个level相同的场景copy过来）。比如某个房间，打开门结果到了一个梦幻的世界郊外（有边界）。这样玩家下次到达真实的该场景时，会反应过来这个地方我来过（实际上不是同一个地方）。
+
+玩家初始1级有100点血和魔，每升一级加100，最高100级，血和魔上限9999.
+
+when level/scene changes such as the player goes thru a portal, fade out the current game view, then switch to a UI canvas with progress bar, then fade in the new game view. use a script to control fading effect. Using coroutines。
+
+MUSIC没有版权没关系，做成可以让玩家自行选择本地音乐文件的形式，每个人对于每个场景最适合什么音乐可能有不同的偏好，这样让他们自己去匹配自己最喜欢的场景氛围。ofc, the player has the option to choose if to play the music in a scene or not, there's gonna be a play/stop button. 至于我自己的版本，我发给其他朋友和测试者邀请他们一起玩的版本，由我自己事先选好音乐，这样不构成侵权，只属于私用，但要明确告知对方不可以在网上进行发布。
+MUSIC还有个办法，利用AI自动编曲，需要用到音乐人工智能的知识，具体到时候参考知乎收藏的文章学习一下，然后去咨询相关专业的答主，看能不能用现成的API或自己训练个模型，只要把我想用的原曲feed给这个模型，模型就会自动生成一段相同曲风的BGM（无法逆向工程的，这样就没人知道原曲是什么，不涉及任何版权问题，其实也可以在游戏里列出来原曲列表给玩家参考）
+MUSIC的播放由场景自动触发，进入则开始播放，同时在画面右上角以“大图书馆的牧羊人”相同的方式，在一个半透明小文字框里显示当前所播放的曲目名称。
+
+关于武器，主要武器是魔杖wand，同一根魔杖有多种技能效果，对应不同快捷键，每次触发时在update中instantiate粒子系统，无需使用对象池，但要设置boolean标记表示技能进入CD（update会判断bool标记），同时，下方UI技能框要显示技能CD的状态。每种技能的攻击速度范围都不同，直接在wand类中设置。由于有CD机制的存在，不用对象池，并且每次直接getcomponent也不会有性能问题。
+
+关于升级系统、职业系统和技能树，有个最简单的办法，就是与现实世界的人类成长一一对应。职业分为理工科、文科商科（物理术士，数学术士，化学元素术士，商术士，文术士，格斗士，魔法使等等），升级是通过做题来完成的，在游戏中设置对应学科的习题，答案对了就获得经验值，达到上限就升级，可以获得新的技能和道具。为了游戏性，不要把题目出的很难太专业，而要有一定的趣味性，比如可以是很神奇的小学奥数题，脑筋急转弯，哲学讨论题，简单科普题，或是文学著作和逻辑经典书籍的摘抄什么的。
+
+每个玩家有一个笔记本，功能和未来日记类似，每触发一定事件，笔记本上会自动记录一些文字，并提示音提示玩家。其实一开始笔记本里就有全部的故事text，只不过是逐条显示，每次readline一行，并保存seeker的位置状态，而不用去本地文件里每次读取。
+
+语音系统完成之后，要在unity里实现3D效果，比如玩家在房间里说话，必须要有回声，模拟现实的声音而不只是麦克风。
+
+实现一个动态加载地图的功能，用trigger collider做，当玩家靠近一定范围时，附近的房间内室才会load加载。
+
+游戏build完成之后，生成了windows的exe，用Inno Setup（https://jrsoftware.org/isdl.php）按步骤生成一个installer，再把installer分享给朋友在他们的电脑上安装。

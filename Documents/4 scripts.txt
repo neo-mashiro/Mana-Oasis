@@ -1,0 +1,22 @@
+第一级目录下的scripts
+Utilities  // 放置所有的Utility脚本，大多数是static的类，也有继承monobehavior的通用功能脚本，共同点是会在不同项目中反复【复用】
+UnityExtensions  //  存放与Unity相关的extensions方法，简化/丰富/优化Unity script API的功能，未来也可以移植到其他项目
+Players  //  存放所有与玩家直接相关的脚本，如第一视角第三视角controller，动画脚本，驾驶controller
+Enemies  // 敌人脚本
+
+然后，每个场景是单独的一个文件夹，里面又会有一个二级scrips文件夹，用于存放场景中gameobjects相关的脚本，按内容、功能分类
+Chess  //  象棋
+Museum  // 奇幻博物馆，展示一些粒子特效，数学曲面和现实中不存在的东西
+
+每个文件夹都是一个单独的namespace，在其他脚本中使用该文件夹内的代码时，只需要在开头加上directives即可。
+例如，使用对象池或其他Utility库的脚本，在开头加上Using Utilities; 使用扩展库的脚本，加上Using UnityExtensions;
+
+我的设计思路是，一级目录的scripts存放游戏的主要逻辑功能（rules of play），比如玩家controller，怪物spawner，寻路逻辑，音乐播放，场景加载脚本等等，唯一的例外是UI，UI系统单独放在UI文件夹下（如显示fps的脚本），这部分脚本是游戏的主干核心，是独立于不同的场景存在的，是全局的通用的功能性脚本，与具体某个场景保持零耦合关系。
+相对应的，每个场景下的二级目录的scripts只存放该场景相关的物体的逻辑脚本，是只针对该场景的local的脚本，不涉及全局。哪怕我把某个场景比如x.Restopia完全删除，游戏一样可以正常运行，只是少了一个可加载的场景。如果满足不了这个条件，我的设计就是失败的。只有满足了这个条件，做出来的游戏才可以很好的维护，可以很好的scale up。
+==========================================================
+
+Utilities scripts
+
+https://github.com/TobiasWehrum/unity-utilities
+https://wiki.unity3d.com/index.php/Scripts/Utility
+https://wiki.unity3d.com/index.php/Scripts

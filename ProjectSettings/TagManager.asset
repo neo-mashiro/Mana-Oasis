@@ -3,7 +3,14 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Bullet
+  - SnowGround
+  - WoodGround
+  - MarbleGround
+  - MeadowGround
+  - SandGround
+  - BounceGround
   layers:
   - Default
   - TransparentFX
@@ -13,7 +20,7 @@ TagManager:
   - UI
   - 
   - 
-  - 
+  - Cell
   - 
   - 
   - 

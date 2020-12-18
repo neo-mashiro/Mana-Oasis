@@ -1,0 +1,137 @@
+﻿// a compute shader is generally used to execute code and heavy computations on GPUs
+// these are usually the same computations that need to be run millions of times
+// thus, a compute shader helps to reduce workload on CPU, and instruct GPUs to do the work in parallel
+// hence, a compute shader is not a regular shader, but just a small program run on GPUs
+// so it is preferred to put them in the scripts folder, not in the shaders folder
+
+// when writing a compute shader, the purpose is to define 1 or more kernel functions
+// as well as compute buffers to store the computed data, it is just a script that is
+// attached to the GPU by default, the *.compute scripts are executed by GPUs.
+// in other words, compute shaders tell GPU what to do and how to do it
+// 
+// then later, in a normal C# script which is run by CPU, we can use the Unity computeShader class to
+// actually dispatch the compute shader. for example, each frame the Unity Update() function can
+// update the properties of a compute shader by using setInt(), setFloat(), setBuffer(), based on the
+// game status, link to the compute buffer using a reference, then dispatch a kernel.
+// this way, our CPU can instruct GPU to run the compute shader on demand, it's the CPU that decides
+// what properties to use and when GPU should work, and CPU has a reference to the buffer so it knows
+// the updated data. finally, we can use this updated data to do game logic, such as sending them to
+// a regular shader so the rendering will be updated.
+
+#pragma kernel Wave
+#pragma kernel WaveToRipple
+#pragma kernel WaveToSphere
+#pragma kernel WaveToTorus
+
+#pragma kernel RippleToWave
+#pragma kernel Ripple
+#pragma kernel RippleToSphere
+#pragma kernel RippleToTorus
+
+#pragma kernel SphereToWave
+#pragma kernel SphereToRipple
+#pragma kernel Sphere
+#pragma kernel SphereToTorus
+
+#pragma kernel TorusToWave
+#pragma kernel TorusToRipple
+#pragma kernel TorusToSphere
+#pragma kernel Torus
+
+RWStructuredBuffer<float3> _Positions;  // read-write compute buffer
+uint _Resolution;
+float _Step, _Time, _TransitionProgress;
+
+// convert the thread id to UV coordinates (for our math surfaces)
+// (u + 0.5) * _Step - 1 corresponds to the range (-1, 1) on u axis
+// (v + 0.5) * _Step - 1 corresponds to the range (-1, 1) on v axis
+float2 GetUV (uint3 id) {
+	return (id.xy + 0.5) * _Step - 1.0;
+}
+
+// save position for the thread identifier into the compute buffer
+// thread id in our case is 2D, but the buffer stores data in 1D array
+// 1D and 2D index is converted by: i = x + y * _GridSize
+void SetPosition (uint3 id, float3 position) {
+	if (id.x < _Resolution && id.y < _Resolution) {
+		_Positions[id.x + id.y * _Resolution] = position;
+	}
+}
+
+#define PI 3.14159265358979323846
+
+float3 Wave (float u, float v, float t) {
+	float3 p = float3(u, 0, v);
+	p.y = sin(PI * (u + 0.5 * t));
+	p.y += 0.5 * sin(2.0 * PI * (v + t));
+	p.y += sin(PI * (u + v + 0.25 * t));
+	p.y *= 1.0 / 2.5;
+	return p;
+}
+
+float3 Ripple (float u, float v, float t) {
+	float d = sqrt(u * u + v * v);
+	float3 p = float3(u, 0, v);
+	p.y = sin(PI * (4.0 * d - t));
+	p.y /= 1.0 + 10.0 * d;
+	return p;
+}
+
+float3 Sphere (float u, float v, float t) {
+	float r = 0.9 + 0.1 * sin(PI * (12.0 * u + 8.0 * v + t));
+	float s = r * cos(0.5 * PI * v);
+	float3 p;
+	p.x = s * sin(PI * u);
+	p.y = r * sin(0.5 * PI * v);
+	p.z = s * cos(PI * u);
+	return p;
+}
+
+float3 Torus (float u, float v, float t) {
+	float r1 = 0.7 + 0.1 * sin(PI * (8.0 * u + 0.5 * t));
+	float r2 = 0.15 + 0.05 * sin(PI * (16.0 * u + 8.0 * v + 3.0 * t));
+	float s = r2 * cos(PI * v) + r1;
+	float3 p;
+	p.x = s * sin(PI * u);
+	p.y = r2 * sin(PI * v);
+	p.z = s * cos(PI * u);
+	return p;
+}
+
+// macro function to create a kernel
+#define CREATE_KERNEL(function) \
+	[numthreads(8, 8, 1)] \
+	void function (uint3 id: SV_DispatchThreadID) { \
+		float2 uv = GetUV(id); \
+		SetPosition(id, function(uv.x, uv.y, _Time)); \
+	}
+
+// macro function to create a morph kernel
+#define CREATE_MORPH_KERNEL(f1, f2) \
+	[numthreads(8, 8, 1)] \
+	void f1##To##f2 (uint3 id: SV_DispatchThreadID) { \
+		float2 uv = GetUV(id); \
+		float3 position = lerp(f1(uv.x, uv.y, _Time), f2(uv.x, uv.y, _Time), _TransitionProgress); \
+		SetPosition(id, position); \
+	}
+
+CREATE_KERNEL(Wave)
+CREATE_KERNEL(Ripple)
+CREATE_KERNEL(Sphere)
+CREATE_KERNEL(Torus)
+
+CREATE_MORPH_KERNEL(Wave, Ripple);
+CREATE_MORPH_KERNEL(Wave, Sphere);
+CREATE_MORPH_KERNEL(Wave, Torus);
+
+CREATE_MORPH_KERNEL(Ripple, Wave);
+CREATE_MORPH_KERNEL(Ripple, Sphere);
+CREATE_MORPH_KERNEL(Ripple, Torus);
+
+CREATE_MORPH_KERNEL(Sphere, Wave);
+CREATE_MORPH_KERNEL(Sphere, Ripple);
+CREATE_MORPH_KERNEL(Sphere, Torus);
+
+CREATE_MORPH_KERNEL(Torus, Wave);
+CREATE_MORPH_KERNEL(Torus, Ripple);
+CREATE_MORPH_KERNEL(Torus, Sphere);

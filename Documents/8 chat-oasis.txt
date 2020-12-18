@@ -1,0 +1,19 @@
+# Building a simple online game server for Unity (Go server + C# client)
+
+https://stackoverflow.com/questions/30502317/building-a-simple-online-game-server-for-unity
+https://stackoverflow.com/questions/47408998/how-to-write-tcp-ip-network-in-c-sharp-and-server-in-golang-for-unity-multiplaye
+
+# Golang
+
+https://golang.org/doc/
+https://tour.golang.org/welcome/1
+https://www.coursera.org/learn/golang-getting-started/lecture/RuURE/m3-1-1-arrays
+study my starred repos on Github
+awesome Go frameworks, libraries: https://github.com/avelino/awesome-go
+
+# gRPC
+
+https://www.sanarias.com/blog/1216AsimplegRPCdemoinGoandCSharp
+https://github.com/santiaago/grpc.demo
+https://www.grpc.io/docs/
+https://www.youtube.com/watch?v=QyxCX2GYHxk&list=PLLWMQd6PeGY1C3YLCyAUIDJrPS9S3WdLK&index=20

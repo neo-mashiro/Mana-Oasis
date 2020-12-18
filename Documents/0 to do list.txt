@@ -1,0 +1,49 @@
+把countDown的脚本整理出来。
+研究singleton的设计。
+整理IDamageable(可以进一步把player做成singleton，可以吗，每个游戏只有唯一的player，其他player是网络对面的，用的是sendmessage，所以这个唯一的player要有一个receive和handle message的功能)，有了Singleton，recoveryzone也要改。
+
+复习一遍Test-Oasis关于C#的语法
+
+1月份开始，开学左右，就开始在glassdoor上投简历，找ubisoft和unity这种实习的机会。
+记得发邮件给ayoub让他介绍下有什么好的montreal的unity的岗位，他人脉广。ayoub还是非常赞的。。。。。
+
+
+用圆柱体把游泳爬梯子这些功能都测通
+crouch的时候，相机的followPoint也要跟着下降才行
+water用trigger collider没问题，但是ladder呢，用trigger的话就可以直接穿过去了
+需要补一段从swim回到default的逻辑。。。
+
+把root motion用Shirley做进去，先不用管头部转动的动画（FPS下应该头部随着相机转动的，水平和垂直都可以）
+
+refactor玩家和相机的控制脚本
+refactor planet和teleporter的脚本
+
+处理physicsMover的问题，当站在旋转的平台上时，人物要随着平台一起旋转和移动，TPS时camera不动（上帝视角），FPS时camera也要跟着动，完成后测一下和普通的kinematic的刚体的交互，再测一下和physics刚体的交互（在motor上找到rigidbody interaction type的设置）。这部分目前可能解决不了，KCC只支持站在physicsMover上的互动，对于一般的没加PhysicsMover的刚体比如我的car，搞不定，等DOTS CC发布再说吧，先就单独用carController。
+干脆就这样，玩家上车后，禁用KCC，切换成carController就行了，然后把玩家做成car的child，下车了再切回KCC。
+
+测一下改好的脚本能否控制AI
+
+Observer pattern实现游戏内的成就system，当玩家完成一定数量的kill或什么的，给予manacoin的奖励什么的，或者解锁某些功能，通过UI提示来反应。
+https://www.youtube.com/watch?v=Yy7Dt2usGy0
+
+研究学习一下DOTween Pro的用法。
+
+交互没问题了，把carController素材导进来，配合车辆的素材，hook一下驾驶的FPS和TPS（KCC很难处理非physicMover的dynamic刚体，可能要等DOTS CC发布了才行）
+
+利用cinemachine和timeline制作并测试一下玩家的cutscene，利用default到Charging state的转换。
+
+研究一下kinematicCharacterController中的network部分，看一下如何手动控制simulation和setTick，处理网络的延迟模拟
+
+学习ScriptableObject Tutorial and Template:
+https://www.raywenderlich.com/2826197-scriptableobject-tutorial-getting-started
+https://www.youtube.com/watch?v=HQNl3Ff2Lpo
+https://www.youtube.com/watch?v=SmnjRCa_iO4&t=71s
+https://www.youtube.com/watch?v=LdlKiKC6mr4
+https://learn.unity.com/tutorial/introduction-to-scriptable-objects#5cf187b7edbc2a31a3b9b123
+
+继续刷Jasper的object management教程，render光照等等
+
+学习Unity UI 1.0.0 （UGUI）
+
+C++玩转OpenGL，研究下Cherno的视频
+用C++玩OpenGL，最好做个小项目，学习Cherno视频。

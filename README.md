@@ -7,9 +7,9 @@
 
 3D reconstruction of my imagination world...
 
-This project aims to build an exploration video game that provides players with immersive experience. The expected release date is Sep, 2022. (I'll publish it on Steam when the time comes)
+This project aims to build an exploration RPG game that provides players with immersive experience, targeted at high-end PCs and VR platforms. The expected release date is Sep, 2022. (I'll publish it on Steam when the time comes)
 
-The introduction website will be published from the `gh-pages` branch.
+The introduction website will be published from the `gh-pages` branch. (in construction)
 
 
 
