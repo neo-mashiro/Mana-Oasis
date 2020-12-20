@@ -73,7 +73,18 @@ Time.fixedDeltaTime是一个常数，和游戏FPS无关，可以在project setti
 
 LateUpdate() is called after all Update functions have been called but before redrawing the scene，记住a follow-camera should always be updated in LateUpdate！！
 
+什么时候用abstract类，什么时候用interface，结合设计模式去考虑。
+前者是is-a的关系，后者是has-a的关系。前者是inherit的关系，可以用virtual和override，后者是implement的关系，可以提供多个规范。
+https://stackoverflow.com/questions/747517/interfaces-vs-abstract-classes
+
 tag是用来处理批量的go的，如果某个tag只有一个go用，就显得有些没必要，但实际上这是为了性能，因为Find函数（通过name find）非常慢，会搜索全部scene的每一个go，但是findWithTag函数是优化过的，findGameObjectsWithTag也一样，只不过是返回所有该tag的go。使用tag时，脑子里先把go干净的分好类，想好tag，否则后面很乱会很难改。如果实在要find一个go，比如事先不知道该go在哪儿，或是该go要在游戏中后面才会生成，那么findWithTag是最优的选择，然而！！！通常我们都知道要找的是哪个go，所以其实可以不用在脚本里find，直接定义一个SerializeField变量，提前在编辑器中拖拽hook up上就行了，这样比findWithTag还要快很多，而且还能减少场景加载时间。
+
+singleton模式要慎用，一个singleton的instance被创建以后，因为是在class内被instantiate的，所以它在程序运行时就永远存在而不会被gc掉。如果有很多个singleton，就会不必要的占据固定的内存。什么时候用呢？如果你需要一个class的实例数据，且该instance是在整个程序全局需要被共享的，且整个程序全局只能有一个该类的instance时，可以用。比如说，实现一个全局的GameManager，是全局共享的且只能有一个。再比如，单机游戏只有一个玩家，且玩家的数据本来就是要永远存在的，且游戏中各种地方都会去调用玩家的TakeDamage方法，那么玩家的class就可以做成singleton。数据库和服务器这种庞大的对象，虽然也是全局共享的单例，但千万不要做成singleton，会很占内存。而对于不大不小的全局共享对象，要不要做成singleton是看情况的，用了则会占用内存，但减少了CPU读写开销，不用的话省内存，但每次读写就会更消耗CPU，所以本质上是一个balancing act，在内存和CPU中间找平衡取舍，如果读写十分频繁的话，舍弃点内存节省CPU消耗还是很不错的。
+singleton可以persist across scenes，不管有多少个scene，都能共享同一个singleton。
+在Unity中使用singleton，还要额外注意，因为要继承monobehavior的话，没法保证singleton只有一个instance，哪怕构造函数的private的，我们依然可以在editor里拖拽脚本来创建多个singleton的实例，或者用Instantiate函数来创建实例，想避免这种情况，就要非常小心。
+
+C#的internal关键字和C++的friend友元类似，但可能是个code smell，用的时候考虑好。Unity中不用考虑这么复杂，必须用到了再说。
+Code smells are usually not bugs; they are not technically incorrect and do not prevent the program from functioning. Instead, they indicate weaknesses in design that may slow down development or increase the risk of bugs or failures in the future.
 
 conversion和cast是完全不同的，所以(int)x和Convert.ToInt32(x)有本质的区别，但这个问题极其复杂，具体用到了case by case搜一下。。。
 

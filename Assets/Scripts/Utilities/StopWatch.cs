@@ -5,6 +5,7 @@ namespace Utilities {
 
     /// <summary>
     /// A time-scale independent device that counts upwards from zero for measuring elapsed time.<br/>
+    /// Note: this is a Unity component class, not to be confused with the Stopwatch class in C#.<br/>
     /// <br/>
     /// For devices that tick at a fixed interval such as timers and stopwatches, it's easier to work with delta time,
     /// but this approach suffers from floating point imprecision. When the elapsed time becomes a very large float

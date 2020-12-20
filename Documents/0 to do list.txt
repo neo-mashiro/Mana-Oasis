@@ -1,4 +1,6 @@
-把countDown的脚本整理出来。
+测一下cooldown的功能。
+
+
 研究singleton的设计。
 整理IDamageable(可以进一步把player做成singleton，可以吗，每个游戏只有唯一的player，其他player是网络对面的，用的是sendmessage，所以这个唯一的player要有一个receive和handle message的功能)，有了Singleton，recoveryzone也要改。
 
@@ -6,6 +8,7 @@
 
 1月份开始，开学左右，就开始在glassdoor上投简历，找ubisoft和unity这种实习的机会。
 记得发邮件给ayoub让他介绍下有什么好的montreal的unity的岗位，他人脉广。ayoub还是非常赞的。。。。。
+不要去考Unity的资格证书，不值得的，专心加速把自己的游戏做出来。
 
 
 用圆柱体把游泳爬梯子这些功能都测通
@@ -26,13 +29,19 @@ refactor planet和teleporter的脚本
 Observer pattern实现游戏内的成就system，当玩家完成一定数量的kill或什么的，给予manacoin的奖励什么的，或者解锁某些功能，通过UI提示来反应。
 https://www.youtube.com/watch?v=Yy7Dt2usGy0
 
-研究学习一下DOTween Pro的用法。
+研究学习一下DOTween Pro的用法，这个是用来做animation的，主要功能是interpolate一个个的keyframe.
 
 交互没问题了，把carController素材导进来，配合车辆的素材，hook一下驾驶的FPS和TPS（KCC很难处理非physicMover的dynamic刚体，可能要等DOTS CC发布了才行）
 
 利用cinemachine和timeline制作并测试一下玩家的cutscene，利用default到Charging state的转换。
 
 研究一下kinematicCharacterController中的network部分，看一下如何手动控制simulation和setTick，处理网络的延迟模拟
+
+[CRITICAL CHANGE]
+1. 现阶段先凑合用老的Input Manager，因为input都比较简单。等基本框架搭起来以后，切换到新的Input System Package，脚本代码再做相应的调整。
+不要浪费时间去学习老的Input Manager体系，马上就被淘汰了，新的Input包很牛逼，功能非常强大，可以各种bind事件，根据场景切换功能什么的，是未来的大趋势。
+2. Unity的2020 LTS版本出来以后，migrate到新版本的Unity，届时，Unity会支持C# 8.0的新语法和功能，包括nullable reference类型以及default interface implementations之类的。当Interface可以支持default代码实现的时候，传统的OOP继承就基本上没有用武之地了。
+
 
 学习ScriptableObject Tutorial and Template:
 https://www.raywenderlich.com/2826197-scriptableobject-tutorial-getting-started

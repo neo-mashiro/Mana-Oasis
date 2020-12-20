@@ -22,15 +22,19 @@ namespace Utilities {
         private static readonly TimeSpan LunarSpan = new TimeSpan(12, 0, 0);
 
         /// <summary>
-        /// Returns the current datetime in the world of Mana-Oasis (300 years later).
+        /// Returns the current datetime in the world of Mana-Oasis (300 years later). The mana datetime does not
+        /// take into account local time zones and DST, but instead uses the universal UTC time globally.
+        /// This property is not intended to be queried every frame. If you want to display time in a clock, cache
+        /// this in a variable, increment it by the elapsed real time (Time.realtimeSinceStartup), and then resync
+        /// with UTC time every few hours.
         /// </summary>
-        public static DateTime GetManaDate() => DateTime.Now.AddYears(300);
+        public static DateTime GetManaDate => DateTime.UtcNow.AddYears(300);
 
         /// <summary>
         /// Returns the current mana season, which affects terrain weathers in Restopia.
         /// </summary>
         public static ManaSeason GetManaSeason() {
-            var thisMonth = GetManaDate().Month;
+            var thisMonth = GetManaDate.Month;
 
             if (thisMonth >= 12 || thisMonth <= 2) {
                 return ManaSeason.Winter;
@@ -47,7 +51,7 @@ namespace Utilities {
         /// Returns the current mana time, which affects mana concentration in Restopia.
         /// </summary>
         public static ManaTime GetManaTime() {
-            var thisHour = GetManaDate().TimeOfDay.Hours;
+            var thisHour = GetManaDate.TimeOfDay.Hours;
 
             if (thisHour < 1 || thisHour >= 23) {
                 return ManaTime.Midnight;
@@ -72,7 +76,7 @@ namespace Utilities {
         /// Returns the current mana sunrise time, which can be used to control skybox and clock events.
         /// </summary>
         public static TimeSpan GetSunriseTime() {
-            var deltaHours = Mathf.Cos(Mathf.Clamp(GetManaDate().DayOfYear, 0, 360) * Mathf.Deg2Rad);
+            var deltaHours = Mathf.Cos(Mathf.Clamp(GetManaDate.DayOfYear, 0, 360) * Mathf.Deg2Rad);
             return SunriseEpoch + TimeSpan.FromHours(deltaHours);
         }
         
@@ -80,7 +84,7 @@ namespace Utilities {
         /// Returns the current mana sunset time, which can be used to control skybox and clock events.
         /// </summary>
         public static TimeSpan GetSunsetTime() {
-            var deltaHours = Mathf.Cos(Mathf.Clamp(GetManaDate().DayOfYear, 0, 360) * Mathf.Deg2Rad);
+            var deltaHours = Mathf.Cos(Mathf.Clamp(GetManaDate.DayOfYear, 0, 360) * Mathf.Deg2Rad);
             return SunsetEpoch - TimeSpan.FromHours(1.5f * deltaHours);
         }
         

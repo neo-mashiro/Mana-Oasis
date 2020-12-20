@@ -5,6 +5,7 @@ namespace Utilities {
     
     /// <summary>
     /// A time-scale independent device that counts down from a specified time interval.<br/>
+    /// Note: this is a Unity component class, not to be confused with the Timer class in C#.<br/>
     /// <br/>
     /// For devices that tick at a fixed interval such as timers and stopwatches, it's easier to work with delta time,
     /// but this approach suffers from floating point imprecision. If the timer's countdown is a very large float
