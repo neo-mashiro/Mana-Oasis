@@ -1,8 +1,6 @@
 ﻿using System;
 using UnityEngine;
 
-#nullable enable
-
 namespace Utilities {
 
     /// <summary>
@@ -11,12 +9,13 @@ namespace Utilities {
     /// <br/>
     /// This class is intended for game dependent events ONLY, which directly synchronize with the Time class in Unity.
     /// Due to floating point errors accumulated by using delta time, absolute time accuracy is not guaranteed. For
-    /// precision critical code or events, consider using the C# built-in Timer class or Stopwatch class instead.
+    /// precision critical and gameplay independent code, consider using the C# built-in Timer class or Stopwatch class
+    /// instead. However, the system time may not be in sync with Unity time, and the code won't change with time scale.
     /// </summary>
     public class CooldownCounter {
         
-        // a function that returns the number of seconds to cool down in the next loop.
-        private readonly Func<float>? _cooldownFunction;
+        // the cooldown float generator function
+        private readonly Func<float> _cooldownFunction;
         
         public bool Loop { get; }
         
@@ -74,7 +73,8 @@ namespace Utilities {
                 Reset();
             }
             
-            seconds ??= Time.deltaTime;
+            // seconds ??= Time.deltaTime;  // C# 8.0 feature not yet supported in Unity
+            seconds = seconds == null ? Time.deltaTime : seconds;
             TimeLeft = Mathf.Max(TimeLeft - seconds.Value, 0);
             return Ready;
         }

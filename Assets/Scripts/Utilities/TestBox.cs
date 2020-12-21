@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace xxx {
     
-    public class Countdown : MonoBehaviour {
+    public class CountdownTest : MonoBehaviour {
         
         // [SerializeField] private GameObject targetGameObject;
 

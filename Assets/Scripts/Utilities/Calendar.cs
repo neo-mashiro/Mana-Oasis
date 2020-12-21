@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Xml;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -20,6 +23,13 @@ namespace Utilities {
         private static readonly TimeSpan SunriseEpoch = new TimeSpan(7, 0, 0);
         private static readonly TimeSpan SunsetEpoch = new TimeSpan(18, 30, 0);
         private static readonly TimeSpan LunarSpan = new TimeSpan(12, 0, 0);
+
+        public static readonly string[] Anniversaries = {"Genesis", "Goddess", "Christmas", "Carnival"};
+        
+        public static readonly DateTime Genesis = new DateTime(DateTime.UtcNow.Year, 2, 16);
+        public static readonly DateTime Goddess = new DateTime(DateTime.UtcNow.Year, 7, 16);
+        public static readonly DateTime Christmas = new DateTime(DateTime.UtcNow.Year, 12, 25);
+        public static readonly DateTime Carnival = new DateTime(DateTime.UtcNow.Year, 12, 31);
 
         /// <summary>
         /// Returns the current datetime in the world of Mana-Oasis (300 years later). The mana datetime does not

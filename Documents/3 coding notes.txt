@@ -52,12 +52,19 @@ ObjectPool的脚本要挂载在枪、魔杖或其他武器的发射口上，这�
 对象池的设置，每个prefab生成多少个amount，这个是要根据不同的对象去fine tune的，要在游戏中具体测试下，才能找到最优的amount，正好够用又没有浪费。具体测试的时候，用最大速度连发，然后盯着Hierarchy窗口，如果发现对象全都active，说明数量不够，如果最后几个对象始终是greyed out的，那么就够用了。
 我的对象池是通用的，只管预生成object，并在被fetch的时候active一个返回给caller，而不需要去关心caller拿到对象后去做什么。对象始终都在池子里，只不过active状态会变而已。对象本身的脚本，负责实现各种方法以及何时回收，而caller则是负责何时去调对象的方法。对象池自己并不关心这些，它假定caller和对象自己会处理好一切，在短时间内一定会回到inactive的状态。如果出现了问题，不会是池子的问题，要么是caller和对象自己的class没处理好，要么是生成池子的时候amount太小数量不够。
 
+可以给每个自己写的脚本，甚至每个gameobject设置自定义的icon图标，这个很有意思，可以方便我们辨别不同的脚本。
+https://forum.unity.com/threads/gamemanager-cs-icon.539596/
+
 ------------------------------------------------------------------------------------------------------------
 如何在一个脚本里调用另一个脚本的方法？比如player有一个TakeDamage的方法，而游戏中很多其他物体都可能call它，不光是enemy还有地形效果和buff和item效果等等。最直接的办法是在每个可能会是caller的脚本里，设置一个SerializeField变量来拖拽存储player的go，这样就能利用这个变量直接call，但是如果call的地方太多了呢？比如TakeDamage非常通用，到处都在call它，每次都这样设变量在编辑器里拖拽，又麻烦又杂乱，设计很糟糕，那怎么办？
 UnityEvents是用来存放一堆functions的容器，在editor中可以拖拽不同的function进去，告诉某个脚本要执行哪些event，显然不是用来干这个的。
 SendMessage已经不适合现在的版本了，不要使用，性能慢且design很差，BroadcastMessage也是同理。除非？画面左上角做一个游戏内的console，可以输入console命令做设置？可能需要用到SendMessage？
 那就只能GetComponent了，但是一定要每次都这样做吗？有没有更好的办法？
 想了下，应该是没有的。因为这种情况下，你call的那个方法如果不是static的话，必然是在某个已经生成的class instance上call的，所以无论如何都需要有一个该instance（在Unity中也就相当于player go）的reference，如果不拖拽hook up上，那就只能用findWithTag这种更慢的办法了。如果你想把那个方法wrap封装一下，在别的地方随意call，也是不可能的，因为能随意call的只有class的static方法，对于非static方法，是不能把它封装成为static的。换句话说，想要有universal的调用方式，那么必须是针对static方法，而依赖于某个go或instance的方法是无论如何也做不成universal的。试想一下，在playerManager里，playerController已经被成功的hook上了，你想一劳永逸，写个方法PlayerTakeDamage()，在里面去操作在playerController，然后想让外面能随意call它而不用重复hook playerController，这是不可能的，因为要达到这个目的的话，PlayerTakeDamage()必须是static的，而一个static函数体内，是不能access非static的东西的，所以矛盾。换个角度想，这样的设计其实并不糟糕，或者说这样才对，因为在任何一个会deal damage的go上，都应该显式的有一个damage receiver，才符合逻辑。
+
+反正是单机游戏，只有一个player，用singleton也是可以的，而且playerStatus只管理玩家数据而已。或者干脆就用一个static class算了，但是那样的话没法save和load，不适合序列化。这个设计的问题，解决方案不仅要考虑到player数据可以单例的全局访问，还要考虑到怎么序列化save load，怎么persist between scenes。
+
+ScriptableObject也是global access的，可以是singleton的一个很好的替代。
 ------------------------------------------------------------------------------------------------------------
 GetComponent<T>()是generic泛型的版本，返回的直接就是该泛型T(就是某个class的类型，比如某个script的class名字)，然后可以直接操作调方法了。
 GetComponent(typeof(someType))返回的是component，用于获取某个component。通常我们是要对someType的方法进行操作，所以用之前还需要先cast一下：(someType) GetComponent(typeof(someType))。显然，用generic的版本更加便捷。
@@ -71,7 +78,14 @@ TextMeshPro的text不要直接修改，如果每次都给text赋值一个新的�
 Time.fixedDeltaTime是一个常数，和游戏FPS无关，可以在project settings里面设定，默认是0.02f。Time.fixedDeltaTime并不是两个FixedUpdate call之间的间隔时间，这点非常容易搞错，不管是Update还是FixedUpdate，间隔时间都是Time.deltatime。
 还有个很大的误区是以为FixedUpdate is called at fixed time steps，因为它名字里有个fixed，然而实际上并不是，这个fixed与现实世界的时间没任何关系，并不是每隔fixed时间间隔就会被call的，具体的频率由Unity决定。FixedUpdate只用于simulate Physics，不要把其他的每x秒更新的逻辑放在FixedUpdate里，不要在FixedUpdate中使用任何非Physics的代码。
 
+MonoBehavior是个类，但首先是个Behavior，是控制go在unity中如何behave的类，我们通过inherit它来写自己的behavior，这些behavior是通过component的形式来实现的，然后用component来操纵游戏中的go。所以可以说，我们主要是面向component编程的，component是Unity游戏主要的架构模式，component总是和go紧密关联在一起。问题在于，大量的go和component在切换场景的时候，重新load的时候，是要被destroy的，非常的零散，而且无法persist across scenes。所以在大局观上，MonoBehavior并不是用来存放数据的地方，只定义我们的行为。
+ScriptableObject虽然也是继承mono的，但它不与任何的go或component或prefab关联，自带序列化功能，适合包装和存放数据，并且能share across scenes，也很便于transfer到其他项目。ScriptableObject适合用于存放player或enemy的数据，然后在mono的行为脚本里，我们可以去reference它，把数据和行为的代码分离。还可以用来存放inventory的数据。甚至是整个场景的level data，配合上JsonUtility的序列化功能。到时候看看save load用这个怎么样。
+
 LateUpdate() is called after all Update functions have been called but before redrawing the scene，记住a follow-camera should always be updated in LateUpdate！！
+
+C#有自带的Timer和Stopwatch类，时间可以非常精准，当处理precision critical逻辑比如数据库和登录时间的时候，都要用这两个。但是在Unity中，还是用我自己写的那几个包括cooldownCounter的类，因为游戏里的event要和Unity的Time.deltaTime等时间挂钩，需要根据time scale和FPS变化而变化，而不应该参照绝对的系统时间。用C#自带的Timer类的话，是没办法处理time scale的问题的，哪怕我们永远不会设置游戏的timeScale，始终用默认值，也无法保证Unity的timeScale和绝对的系统时间是同步的，无法保证该timeScale和现实世界的同步率为1.
+
+有些脚本的名字是Unity保留的关键字，比如Folder，Audioclip，GameManager，Search之类的，当你创建一个同名的脚本时，Unity会自动给它一个图标。这对游戏本身没什么影响，但是和Unity自带的保留的功能可能会冲突，解决办法很简单，把你的脚本代码用一个namespace包起来，只要你用的是自己的namespace，而不是global的全局的namespace，就不会出现这个问题。
 
 什么时候用abstract类，什么时候用interface，结合设计模式去考虑。
 前者是is-a的关系，后者是has-a的关系。前者是inherit的关系，可以用virtual和override，后者是implement的关系，可以提供多个规范。
