@@ -3,6 +3,7 @@
 namespace Utilities {
 	
 	public class Destructor : MonoBehaviour {
+		
 		[SerializeField, Range(0f, 600f)] private float timeout = 5.0f;
 		[SerializeField] private bool detachChildren = default;
 

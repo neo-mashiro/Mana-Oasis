@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Utilities {
@@ -8,7 +7,7 @@ namespace Utilities {
     public static class CoroutineScheduler {
         
         /// <summary>
-        /// Creates a delayed coroutine to be scheduled persistently until explicitly stopped.
+        /// Creates a delayed persistent coroutine to be scheduled every few seconds until explicitly stopped.
         /// </summary>
         public static IEnumerator RepeatSchedule(float delay, float interval, Action callback) {
             yield return new WaitForSeconds(delay);
@@ -21,7 +20,7 @@ namespace Utilities {
         }
         
         /// <summary>
-        /// Creates a delayed coroutine to be scheduled persistently until explicitly stopped.
+        /// Creates a delayed persistent coroutine to be scheduled every few seconds until explicitly stopped.
         /// </summary>
         public static IEnumerator RepeatSchedule<T> (float delay, float interval, Action<T> callback, T parameter) {
             yield return new WaitForSeconds(delay);
@@ -34,7 +33,7 @@ namespace Utilities {
         }
 
         /// <summary>
-        /// Creates a delayed coroutine to be scheduled repeatedly every few seconds.
+        /// Creates a delayed coroutine to be scheduled every few seconds for duration seconds.
         /// </summary>
         public static IEnumerator RepeatSchedule(float delay, float interval, float duration, Action callback) {
             yield return new WaitForSeconds(delay);
@@ -52,7 +51,7 @@ namespace Utilities {
         }
 
         /// <summary>
-        /// Creates a delayed coroutine to be scheduled repeatedly every few seconds.
+        /// Creates a delayed coroutine to be scheduled every few seconds for duration seconds.
         /// </summary>
         public static IEnumerator RepeatSchedule<T> (float delay, float interval, float duration, Action<T> callback, T parameter) {
             yield return new WaitForSeconds(delay);

@@ -3,17 +3,17 @@ using System.Collections;
 using System.Collections.Generic;
 using Players;
 using UnityEngine;
+using Utilities;
+using Random = UnityEngine.Random;
 
 namespace xxx {
     
-    public class CountdownTest : MonoBehaviour {
+    public class TestBox : MonoBehaviour {
+
+
         
-        // [SerializeField] private GameObject targetGameObject;
-
-        // private Component _component;
-
         private void Start() {
-            // _component = targetGameObject.GetComponent<PlayerStatus>();
+
         }
         
         private void Update() {
@@ -21,7 +21,7 @@ namespace xxx {
 
             }
             else if (Input.GetKeyDown(KeyCode.Alpha2)) {
-                
+
             }
             else if (Input.GetKeyDown(KeyCode.Alpha3)) {
                 

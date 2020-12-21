@@ -10,8 +10,8 @@ namespace Utilities {
     /// For devices that tick at a fixed interval such as timers and stopwatches, it's easier to work with delta time,
     /// but this approach suffers from floating point imprecision. When the elapsed time becomes a very large float
     /// (99:59:59 requires 359,999 seconds), and you add or subtract very small numbers (unscaled delta time) from it
-    /// over and over again, you introduce rounding errors that can accumulate. A robust solution is to compare real
-    /// time to a fixed start timestamp.
+    /// over and over again, you introduce rounding errors that can accumulate. For robustness, this solution compares
+    /// real time to a fixed start timestamp.
     /// </summary>
     public class StopWatch : MonoBehaviour {
 

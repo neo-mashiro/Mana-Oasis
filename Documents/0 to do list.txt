@@ -1,7 +1,6 @@
 测一下cooldown的功能。
-
-
 复习一遍Test-Oasis关于C#的语法
+看Russell的视频，简略过一遍，马上Moodle就关了。
 
 1月份开始，开学左右，就开始在glassdoor上投简历，找ubisoft和unity这种实习的机会。
 记得发邮件给ayoub让他介绍下有什么好的montreal的unity的岗位，他人脉广。ayoub还是非常赞的。。。。。

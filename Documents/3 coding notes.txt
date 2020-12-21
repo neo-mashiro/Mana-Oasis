@@ -37,6 +37,11 @@ use alt+shift+n to create a new empty child gameobject of the selected gameobjec
 https://zhuanlan.zhihu.com/p/27990334
 NonSerialized主要是用来避免序列化一个变量，于是Unity或其他Json或二进制序列化不会包含这个字段，也就是在任何data打包传送的过程中，此字段都会被忽略。（比如，clone或instantiate一个go时，unity就会需要去序列化该go；还有当unity想要把脚本里的字段显示在editor中，也必然有个序列化反序列化即save/load的过程）。一般来说，私有变量用private就可以，如果又想保护数据以防被改，又想被其他类访问到，就用[NonSerialized] public（当然也可以为这个字段专门设一个public getter property，但很麻烦也未必适用，property是用于专门为了给其他类访问的变量用的，预计会被频繁访问，如果只是偶尔有可能会被访问到，还是NonSerialized合适）。再有就是比如一些c#无法存储的texture/bitmap之类的变量，不应该也不能被序列化，就要用NonSerialized。通常NonSerialized最常见的用法，还是为了保护某些字段的数据，而这些字段又偶尔可能会被访问到所以无法设成private。
 
+Destroy(gameObject);                 // Removes the go, all its components and children
+Destroy(this);                       // Removes this script instance from the game object
+Destroy(GetComponent<Rigidbody>());  // Removes the rigidbody from the game object
+DestroyImmediate();                  // 千万不要用，非常危险！！！可能会删除你的prefab和其他asset！
+
 PhysX的重力加速度是常数，默认9.81，可以在脚本中通过Physics.gravity.y访问，也可以在Physics project settings中设置。对于某个特殊的scene比如月球场景，可以在loadScene时把Physics.gravity设置成Vector3(0, -4.9f, 0)，即地球的一半，不过要记得换场景时设回-9.81f。
 
 实现一个物体在两点之间来回bounce，有几种方法。首先是Mathf.PingPong，像乒乓球一样反弹，然后还可以用两个方向相反的lerp族函数，使得反弹平滑，再有就是利用三角函数sin,cos，利用sine wave自然的平滑性质，并且可以自己调节wave的形状和频率，实现各种效果。
