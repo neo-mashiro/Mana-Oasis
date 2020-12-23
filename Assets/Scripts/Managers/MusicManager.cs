@@ -6,7 +6,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using Utilities;
 
-namespace Manager {
+namespace Managers {
     
     /// <summary>
     /// [!Caution] This is the sealed singleton class for music management.

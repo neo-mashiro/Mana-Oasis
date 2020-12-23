@@ -33,9 +33,25 @@ use alt+shift+n to create a new empty child gameobject of the selected gameobjec
 这个叫做surface snapping，用的时候保证Gizmos切换成center而不是pivot模式，对于在terrain上搭建筑非常有用。
 还可以按住V来做Vertex snapping。
 
+为什么我在scene view里看到的一个go的xyz坐标方向不对，或者是歪的？
+1. 在最上方工具栏里，把local模式切换成global模式就好了
+为什么我在inspector里看到一个go的transform.position和scene view里的xyz坐标位置不匹配？
+1. 首先，检查一下你这个go是不是child，它的parent的position是不是000，如果有parent，那么position的值是相对parent的位置。
+2. pivot模式下，点击一个go所显示的xyz坐标位置，就是该go所对应的transform在world space的position，而在center模式下，xyz坐标位置显示的是物体中心。
+3. 检查下你的go的rotation是多少，是不是被倒过来翻转了？
+
+OnDrawGizmos()只会在editor中运行，开发的时候起作用。正式build的时候是不会跑的，请放心。
+如果有函数不确定的话，加上[Conditional("UNITY_EDITOR")]的attribute就好了，这个等同于#IF UNITY_EDITOR directive语句，但更高级。
+
+如果particle的数量达到几万几百万数量级，为了性能不要用Unity自带的particle system，而是要用Visual Effect Graph，直接在GPU上面跑的，用来模拟规模非常大的粒子效果，比如战争迷雾这种。
+
 关于Unity与C#的序列化与反序列化，BinaryFormatter/XML/JSON，各种SerializeField/HideInInspector/NonSerialzed/Serializable的区别与比较：
 https://zhuanlan.zhihu.com/p/27990334
 NonSerialized主要是用来避免序列化一个变量，于是Unity或其他Json或二进制序列化不会包含这个字段，也就是在任何data打包传送的过程中，此字段都会被忽略。（比如，clone或instantiate一个go时，unity就会需要去序列化该go；还有当unity想要把脚本里的字段显示在editor中，也必然有个序列化反序列化即save/load的过程）。一般来说，私有变量用private就可以，如果又想保护数据以防被改，又想被其他类访问到，就用[NonSerialized] public（当然也可以为这个字段专门设一个public getter property，但很麻烦也未必适用，property是用于专门为了给其他类访问的变量用的，预计会被频繁访问，如果只是偶尔有可能会被访问到，还是NonSerialized合适）。再有就是比如一些c#无法存储的texture/bitmap之类的变量，不应该也不能被序列化，就要用NonSerialized。通常NonSerialized最常见的用法，还是为了保护某些字段的数据，而这些字段又偶尔可能会被访问到所以无法设成private。
+
+anchor是一个UI元素的Rect Transform相对于它的parent的Rect Transform的位置。anchor中的min max值，指的是anchor相对于parent Rect Transform的位置，是一个百分比例，当parent的scale发生变化时（切换分辨率），anchor的值能够保证anchor相对parent永远处于同一个位置，比如水平30%垂直50%等等。同样的，pivot的值也是一个百分比，指的是pivot在当前UI元素中的相对位置。
+在UI元素的Rect Transform中，POS X Y的值，指的是该元素的pivot距离anchor有多远。当pivot和anchor重合时，pos x y永远为0.
+在调UI的时候，不要直接去改POS X Y的值，先确定好anchor和pivot的位置（最好用九宫格Rect Tool），然后有必要了再去改POS，否则一团糟。
 
 Destroy(gameObject);                 // Removes the go, all its components and children
 Destroy(this);                       // Removes this script instance from the game object

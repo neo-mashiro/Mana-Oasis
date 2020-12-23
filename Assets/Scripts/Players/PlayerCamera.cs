@@ -1,13 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static Utilities.MathUtils;
 
 namespace Players {
     
     public class PlayerCamera : MonoBehaviour {
-        
-        private enum Perspective { FirstPerson, ThirdPerson }
-        
+
         [Header("Distance")]
         [SerializeField] private float defaultFollowDistance = 6f;
         [SerializeField] private float minFollowDistance = 3f;
@@ -20,7 +19,7 @@ namespace Players {
         [SerializeField] private bool invertX = false;
         [SerializeField] private bool invertY = false;
         [SerializeField, Range(-90f, 90f)] public float defaultVerticalAngle = 20f;
-        [SerializeField, Range(-90f, 90f)] public float minVerticalAngle = -20f;
+        [SerializeField, Range(-90f, 90f)] public float minVerticalAngle = -40f;
         [SerializeField, Range(-90f, 90f)] public float maxVerticalAngle = 90f;
         [SerializeField] private float rotationSpeed = 1f;
         [SerializeField] private float rotationSharpness = 10000f;
@@ -31,9 +30,9 @@ namespace Players {
         [SerializeField] private LayerMask obstructionMask = -1;
         [SerializeField] private List<Collider> ignoredColliders = new List<Collider>();
 
-        public Vector3 TargetForward { get; set; }
+        private Vector3 TargetForward { get; set; }
+        public Perspective CameraPerspective { get; private set; }
 
-        private Perspective _perspective;
         private Transform _followTarget;
         private Vector3 _followPosition;
         
@@ -53,10 +52,9 @@ namespace Players {
         }
 
         private void Awake() {
-            _perspective = Perspective.ThirdPerson;
-            _actualDistance = defaultFollowDistance;
-            _followDistance = defaultFollowDistance;
-            _verticalAngle = 0f;
+            CameraPerspective = Perspective.ThirdPerson;
+            _actualDistance = _followDistance = defaultFollowDistance;
+            _verticalAngle = defaultVerticalAngle;
         }
 
         public void ProcessInput(Vector3 rotationInput, float zoomInput, bool clickInput, float deltaTime) {
@@ -72,60 +70,52 @@ namespace Players {
             var targetUp = _followTarget.up;
             var rotationFromInput = Quaternion.Euler(targetUp * (rotationInput.x * rotationSpeed));
             TargetForward = rotationFromInput * TargetForward;
+            
             // this nested cross product operation won't change the planar direction if we are on ground
             // but if we are on a planet with self gravity field, this is required to compute the correct direction
-            
             TargetForward = Vector3.Cross(targetUp, Vector3.Cross(TargetForward, targetUp));
             var planarRotation = Quaternion.LookRotation(TargetForward, targetUp);
 
             // handle vertical rotation input
-            _verticalAngle -= (rotationInput.y * rotationSpeed);
-            if (_perspective == Perspective.FirstPerson) {
-                _verticalAngle = Mathf.Clamp(_verticalAngle, -90f, 90f);
-            }
-            else {
-                _verticalAngle = Mathf.Clamp(_verticalAngle, minVerticalAngle, maxVerticalAngle);
-            }
+            _verticalAngle -= rotationInput.y * rotationSpeed;
+            _verticalAngle = CameraPerspective == Perspective.FirstPerson
+                ? Mathf.Clamp(_verticalAngle, -90f, 90f)
+                : Mathf.Clamp(_verticalAngle, minVerticalAngle, maxVerticalAngle);
             
             var verticalRotation = Quaternion.Euler(_verticalAngle, 0, 0);
             
             // combine planar and vertical rotations and apply
-            var targetRotation = Quaternion.Slerp(transform.rotation, planarRotation * verticalRotation,
-                1f - Mathf.Exp(-rotationSharpness * deltaTime));
+            var targetRotation = Quaternion.Slerp(transform.rotation, planarRotation * verticalRotation, EaseFactor(rotationSharpness, deltaTime));
             transform.rotation = targetRotation;
 
             // switch between third-person and first-person perspective
             if (clickInput) {
-                if (_perspective == Perspective.ThirdPerson) {
-                    // switch to the FPS, improve this
-                    // make camera a child of the character?
-                    // switch to a different cinemachineFreeLookCamera that is character's child?
+                if (CameraPerspective == Perspective.ThirdPerson) {
                     _cachedDistance = _followDistance;
                     _followDistance = 0f;
-                    _perspective = Perspective.FirstPerson;
+                    CameraPerspective = Perspective.FirstPerson;
                 }
                 else {
                     _followDistance = _cachedDistance;
-                    _perspective = Perspective.ThirdPerson;
+                    CameraPerspective = Perspective.ThirdPerson;
                 }
             }
 
-            if (_perspective == Perspective.FirstPerson) {
-                _followPosition = Vector3.Lerp(_followPosition, _followTarget.position, 1f - Mathf.Exp(-followSharpness * deltaTime));
-                _actualDistance = Mathf.Lerp(_actualDistance, _followDistance, 1 - Mathf.Exp(-zoomSharpness * deltaTime));
+            if (CameraPerspective == Perspective.FirstPerson) {
+                _followPosition = Vector3.Lerp(_followPosition, _followTarget.position, EaseFactor(followSharpness, deltaTime));
+                _actualDistance = Mathf.Lerp(_actualDistance, _followDistance, EaseFactor(zoomSharpness, deltaTime));
                 
                 transform.position = _followPosition - targetRotation * Vector3.forward * _actualDistance;
             }
             
             else {
-                
                 if (Mathf.Abs(zoomInput) > 0f) {
                     zoomInput = _isObstructed ? 0f : zoomInput;  // disable zoom if camera is moved forward due to obstructions
                     _followDistance += zoomInput * zoomSpeed;
                     _followDistance = Mathf.Clamp(_followDistance, minFollowDistance, maxFollowDistance);
                 }
 
-                _followPosition = Vector3.Lerp(_followPosition, _followTarget.position, 1f - Mathf.Exp(-followSharpness * deltaTime));
+                _followPosition = Vector3.Lerp(_followPosition, _followTarget.position, EaseFactor(followSharpness, deltaTime));
 
                 // check obstructions
                 _obstructionCount = Physics.SphereCastNonAlloc(_followPosition, obstructionCheckRadius,
@@ -145,12 +135,12 @@ namespace Players {
                 // obstructions detected
                 if (closestHit.distance < Mathf.Infinity) {
                     _isObstructed = true;
-                    _actualDistance = Mathf.Lerp(_actualDistance, closestHit.distance, 1 - Mathf.Exp(-obstructionSharpness * deltaTime));
+                    _actualDistance = Mathf.Lerp(_actualDistance, closestHit.distance, EaseFactor(obstructionSharpness, deltaTime));
                 }
                 // no obstructions
                 else {
                     _isObstructed = false;
-                    _actualDistance = Mathf.Lerp(_actualDistance, _followDistance, 1 - Mathf.Exp(-zoomSharpness * deltaTime));
+                    _actualDistance = Mathf.Lerp(_actualDistance, _followDistance, EaseFactor(zoomSharpness, deltaTime));
                 }
 
                 // find the smoothed camera position and apply

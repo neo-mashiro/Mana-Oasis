@@ -1,10 +1,17 @@
-测一下cooldown的功能。
-复习一遍Test-Oasis关于C#的语法
-看Russell的视频，简略过一遍，马上Moodle就关了。
-
 1月份开始，开学左右，就开始在glassdoor上投简历，找ubisoft和unity这种实习的机会。
 记得发邮件给ayoub让他介绍下有什么好的montreal的unity的岗位，他人脉广。ayoub还是非常赞的。。。。。
 不要去考Unity的资格证书，不值得的，专心加速把自己的游戏做出来。
+
+爬梯子，能爬了以后，让free中可以抓住梯子。
+anchor和deAnchor后面加上动画。
+在梯子上禁用FPS视角，强制切换为TPS。如果爬之前是FPS，等玩家爬完了以后再切回FPS。爬梯子的时候，不要设计攻击场景，就老老实实爬，别增加复杂性。
+坡度梯子的时候，相机旋转很晕，能不能改成不在character plane上旋转？？？而是按Vector3.Up旋转？（只要不在坡上搭梯子就行了）
+为什么deanchor以后要回到原来的rotation？能不能回到release point的rotation？然后把release point的rotation提前设好就行了？
+
+test
+从free状态飞到水里。
+addvelocity模拟爆炸的外界力。
+
 
 用圆柱体把游泳爬梯子这些功能都测通
 crouch的时候，相机的followPoint也要跟着下降才行
@@ -14,6 +21,8 @@ water用trigger collider没问题，但是ladder呢，用trigger的话就可以�
 看lovelive sunshine
 
 把root motion用Shirley做进去，先不用管头部转动的动画（FPS下应该头部随着相机转动的，水平和垂直都可以）
+试试看animation rigging
+https://www.youtube.com/watch?v=Htl7ysv10Qs
 
 refactor玩家和相机的控制脚本
 refactor planet和teleporter的脚本
@@ -38,6 +47,7 @@ https://www.youtube.com/watch?v=HQNl3Ff2Lpo
 https://www.youtube.com/watch?v=SmnjRCa_iO4&t=71s
 https://www.youtube.com/watch?v=LdlKiKC6mr4
 https://learn.unity.com/tutorial/introduction-to-scriptable-objects#5cf187b7edbc2a31a3b9b123
+等玩家的系统做好了，修改controller，让玩家在free模式中飞行的时候每秒消耗一点魔法。一旦mana耗尽，就自动切回default状态，可能会摔死。
 
 成就系统：
 Observer pattern实现游戏内的成就system，当玩家完成一定数量的kill或什么的，给予manacoin的奖励什么的，或者解锁某些功能，通过UI提示来反应。
@@ -54,6 +64,9 @@ https://www.youtube.com/watch?v=Yy7Dt2usGy0
 继续刷Jasper的object management教程，render光照等等
 
 学习Unity UI 1.0.0 （UGUI）
+Unity UI Package也叫做UGUI，是官方的扩展package，就是目前版本的editor里自带的UI工具。目前主要用这个做UI开发，认真学一下。
+UI Toolkit是Unity还在开发中的新系统，目前在preview阶段，还有很多bug和功能不全，暂时观望。
+UGUI和UI Toolkit都是Unity官方团队开发的，目前uGUI用户最多，也还在更新release，但官方说UI Toolkit是他们的重心。未来应该是需要migrate到UI Toolkit，但是具体要等多少年UI Toolkit才能dominate，就很难说了，估计起码要两三年。
 
 研究学习一下DOTween Pro的用法，这个是用来做animation的，主要功能是interpolate一个个的keyframe.
 

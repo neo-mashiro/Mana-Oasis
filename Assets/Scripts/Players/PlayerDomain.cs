@@ -2,6 +2,11 @@
 using UnityEngine;
 
 namespace Players {
+    
+    public enum Perspective {
+        FirstPerson,
+        ThirdPerson
+    }
 
     public enum ControlMode {
         Default,
@@ -18,20 +23,13 @@ namespace Players {
     }
 
     public enum OrientationMode {
-        TowardsCamera,
-        TowardsMovement
-    }
-    
-    public enum BonusOrientationMode {
-        None,
         TowardsGravity,
-        TowardsGroundSlopeAndGravity
+        TowardsGravityAndSlope
     }
 
     public struct PlayerCharacterInputs {
         public float MovementZ;
         public float MovementX;
-        public Quaternion CameraRotation;
         public bool JumpDown;
         public bool JumpHeld;
         public bool CrouchDown;
@@ -39,6 +37,8 @@ namespace Players {
         public bool CrouchHeld;
         public bool FreeModeToggled;
         public bool ClimbModeToggled;
+        public Quaternion CameraRotation;
+        public Perspective CameraPerspective;
     }
 
     public struct AICharacterInputs {

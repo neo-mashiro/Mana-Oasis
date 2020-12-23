@@ -1,69 +1,58 @@
-﻿using UnityEngine;
+﻿using System.Diagnostics;
+using UnityEngine;
 
-namespace Players
-{
-    public class Ladder : MonoBehaviour
-    {
-        // Ladder segment
-        public Vector3 LadderSegmentBottom;  // a vector relative to the ladder transform point
-        public float LadderSegmentLength;
+namespace Players {
+    
+    [RequireComponent(typeof(BoxCollider))]
+    public class Ladder : MonoBehaviour {
+        
+        [Tooltip("A vector relative to the ladder's transform position that defines the bottom anchor point.")]
+        [SerializeField] private Vector3 vectorToBottomAnchor;
+        [SerializeField] private float ladderSegmentLength;
 
-        // Points to move to when reaching one of the extremities and moving off of the ladder
-        public Transform BottomReleasePoint;
-        public Transform TopReleasePoint;
+        private Vector3 BottomAnchorPoint => transform.position + transform.TransformVector(vectorToBottomAnchor);
+        private Vector3 TopAnchorPoint => BottomAnchorPoint + transform.up * ladderSegmentLength;
+        
+        [SerializeField] private Transform bottomReleasePoint;  // where we leave the ladder from top
+        [SerializeField] private Transform topReleasePoint;  // where we leave the ladder from bottom
 
-        // Gets the position of the bottom point of the ladder segment
-        public Vector3 BottomAnchorPoint
-        {
-            get
-            {
-                return transform.position + transform.TransformVector(LadderSegmentBottom);
-            }
-        }
+        public Transform BottomReleasePoint => bottomReleasePoint;
+        public Transform TopReleasePoint => topReleasePoint;
 
-        // Gets the position of the top point of the ladder segment
-        public Vector3 TopAnchorPoint
-        {
-            get
-            {
-                return transform.position + transform.TransformVector(LadderSegmentBottom) + (transform.up * LadderSegmentLength);
-            }
-        }
+        /// <summary>
+        /// Returns the closet point on the ladder plane from our character, and outputs a float deviation representing
+        /// how far that point is from the ladder. A negative deviation means the closest point is below the ladder's
+        /// bottom anchor point, a positive deviation means above the ladder's top anchor point. If the closet point
+        /// lies In between the top and bottom anchor points, deviation is always zero.
+        /// </summary>
+        public Vector3 ClosestPointOnLadder(Vector3 fromPoint, out float deviation) {
+            var ladderSegment = TopAnchorPoint - BottomAnchorPoint;            
+            var path = fromPoint - BottomAnchorPoint;
+            var offsetOnLadderPlane = Vector3.Dot(path, ladderSegment.normalized);
 
-        public Vector3 ClosestPointOnLadderSegment(Vector3 fromPoint, out float onSegmentState)
-        {
-            Vector3 segment = TopAnchorPoint - BottomAnchorPoint;            
-            Vector3 segmentPoint1ToPoint = fromPoint - BottomAnchorPoint;
-            float pointProjectionLength = Vector3.Dot(segmentPoint1ToPoint, segment.normalized);
-
-            // When higher than bottom point
-            if(pointProjectionLength > 0)
-            {
-                // If we are not higher than top point
-                if (pointProjectionLength <= segment.magnitude)
-                {
-                    onSegmentState = 0;
-                    return BottomAnchorPoint + (segment.normalized * pointProjectionLength);
+            // higher than bottom anchor point
+            if (offsetOnLadderPlane > 0) {
+                // in between the top and bottom anchor point
+                if (offsetOnLadderPlane <= ladderSegment.magnitude) {
+                    deviation = 0;
+                    return BottomAnchorPoint + ladderSegment.normalized * offsetOnLadderPlane;
                 }
-                // If we are higher than top point
-                else
-                {
-                    onSegmentState = pointProjectionLength - segment.magnitude;
-                    return TopAnchorPoint;
-                }
+                // higher than top anchor point
+                deviation = offsetOnLadderPlane - ladderSegment.magnitude;
+                return TopAnchorPoint;
             }
-            // When lower than bottom point
-            else
-            {
-                onSegmentState = pointProjectionLength;
-                return BottomAnchorPoint;
-            }
+            // lower than bottom anchor point
+            deviation = offsetOnLadderPlane;
+            return BottomAnchorPoint;
         }
 
-        private void OnDrawGizmos()
-        {
+        [Conditional("UNITY_EDITOR")]
+        private void OnDrawGizmos() {
+            var midpoint = (BottomAnchorPoint + TopAnchorPoint) * 0.5f;
             Gizmos.color = Color.cyan;
-            Gizmos.DrawLine(BottomAnchorPoint, TopAnchorPoint);
+            Gizmos.DrawLine(BottomAnchorPoint, midpoint);
+            Gizmos.color = Color.magenta;
+            Gizmos.DrawLine(midpoint, TopAnchorPoint);
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using KinematicCharacterController;
 
 namespace Players {
 
@@ -33,17 +32,19 @@ namespace Players {
         }
 
         private void HandleCharacterInput() {
+            // to be modified when migrating to the new Input System package
             var characterInputs = new PlayerCharacterInputs {
                 MovementZ = Input.GetAxisRaw("Vertical"),
                 MovementX = Input.GetAxisRaw("Horizontal"),
-                CameraRotation = playerCamera.transform.rotation,
                 JumpDown = Input.GetKeyDown(KeyCode.Space),
                 JumpHeld = Input.GetKey(KeyCode.Space),
                 CrouchDown = Input.GetKeyDown(KeyCode.LeftControl),
                 CrouchUp = Input.GetKeyUp(KeyCode.LeftControl),
                 CrouchHeld = Input.GetKey(KeyCode.LeftControl),
                 FreeModeToggled = Input.GetKeyUp(KeyCode.X),
-                ClimbModeToggled = Input.GetKeyUp(KeyCode.E)
+                ClimbModeToggled = Input.GetKeyUp(KeyCode.E),
+                CameraRotation = playerCamera.transform.rotation,
+                CameraPerspective = playerCamera.CameraPerspective
             };
 
             playerController.ProcessInput(ref characterInputs);
