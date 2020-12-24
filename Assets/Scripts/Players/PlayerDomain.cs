@@ -26,6 +26,13 @@ namespace Players {
         TowardsGravity,
         TowardsGravityAndSlope
     }
+    
+    public struct PlayerCameraInputs {
+        public float MovementX;
+        public float MovementY;
+        public float ZoomInput;
+        public bool SwitchView;
+    }
 
     public struct PlayerCharacterInputs {
         public float MovementZ;
@@ -37,8 +44,6 @@ namespace Players {
         public bool CrouchHeld;
         public bool FreeModeToggled;
         public bool ClimbModeToggled;
-        public Quaternion CameraRotation;
-        public Perspective CameraPerspective;
     }
 
     public struct AICharacterInputs {

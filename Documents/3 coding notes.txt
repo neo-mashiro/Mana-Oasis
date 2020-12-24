@@ -19,11 +19,28 @@ SetActive is for gameObjects（go）and enabled is for Components on the Object�
 debug UI的时候，不用自己写log，可以直接点击Hierarchy窗口中的EventSystem go，然后在inspector的最下方就能看到eventsystem的实时debug信息表。
 debug某个go的时候，往往我们也可以把Inspector切换成debug mode，可以直接动态地看到所有private变量的实时更新情况。
 
-GameObject and all of its component exist before awake is called. This means you can call GetComponent in Awake(), 但是要注意，awake里面不可以访问你定义的变量。以下是best practice：
+GameObject and all of its component exist before awake is called. This means you can call GetComponent in Awake(), 但是要注意，awake里面不可以访问你定义的变量，虽然可以访问任何component，但不能访问任何component的变量，包括本class的SerializeField变量。以下是best practice：
 Awake: Here you setup the component you are on right now (the "this" object)
 Start: Here you setup things that depend on other components.
 当第一个Start被call的时候，整个游戏里所有脚本的Awake都已经运行完了。
 如果一个go一开始是inactive的，awake和start都不会被call，只有当它在游戏中被active了以后，awake、start和OnEnable才会被调用。
+
+melee combat用第三人称，ranged combat用第一人称。
+
+创建一个preload scene是个好习惯，可以更简单方便的organize游戏资源，比singleton之类的lazy loading更好用。
+preload scene主要用来生成那些persistent的go，service之类的，也就是整个session所有scene都必须的组件。
+可以考虑用splash screen scene来作为preload scene，实现一样的功能。
+
+如何carry数据across scenes？？？
+    https://gamedev.stackexchange.com/questions/110958/what-is-the-proper-way-to-handle-data-between-scenes
+    https://stackoverflow.com/questions/32306704/how-to-pass-data-between-scenes-in-unity
+playerPrefs是用来存放游戏的配置数据的，是游戏的Preferences数据，比如音量分辨率之类的，而不是用来存游戏数据的。
+在游戏session中，存放数据用ScriptableObject，SO非常灵活，可以方便的carry数据across scenes，但是SO只在当前session内存活，当application退出后SO的数据就没有了，所以可以用ISerializationCallbackReceiver来写自己的custom序列化逻辑，application quit的时候会序列化调用这个callback，就可以手动把游戏数据保存到本地，然后下次打开游戏的时候再从本地load数据到SO里。序列化就用简单的File I/O来做，利用Unity自带的JsonUtility class。
+Zenject这种Injection框架太复杂了，现在没时间去消化，工作了以后再考虑。
+
+如何carry某个go比如玩家和相机across scenes？？？
+1. 如果一个go是在每个scene中都必要的，用DontDestroyOnLoad()比较方便，其实就是做成singleton的模式，只是要注意destroy掉在新场景里的duplicate。
+2. 如果只是想临时把一个go带到下个场景里，有的场景需要该go，有的不需要，所以该go只是在某些相邻的场景里才存活，用SceneManager.MoveGameObjectToScene函数就可以了，该方法要求目标的场景必须已经被加载了，否则不能move。所以就需要在当前scene还在的时候，additively加载新场景，加载完了再unload当前scene，这就会使得两个scene会同时占用memory，如果两个scene都非常庞大的话，内存又比较有限，就不要用了。
 
 如果你确定某个go或component不会被destroy，那么判断它是否为null时，用!ReferenceEquals(go, null)，相比而言，!=null非常昂贵。
 
@@ -136,6 +153,9 @@ Vector3.Equals用于判断两个vector3（可以是点或向量）是否完全�
 the amount returned by Mouse X/Y or the scrollwheel can vary heavily from device to device so it's common to provide a sensitivity setting for the user to adjust. (use a [HideInInspector] public float sensitivity variable, which can be changed via the UI system later in-game) 这个设置后面加在UI里，让玩家可以自己调节，不要放在inspector里。
 
 Mathf是Mono针对C#本身的Math库做了一个简单的封装，性能上是没什么差别的，原生的Math库是基于double类型操作的，Mathf库是基于float类型操作的，所以才叫做Mathf。Mathf的很多方法，其他类也有同名的方法，只是操作对象类型不同，换句话说，很多方法除了Mathf的版本之外还有其他版本。比如Mathf.SmoothDamp是对一个float进行平滑更新，对应到向量，则可以用Vector3.SmoothDamp，功能是完全一样的只不过是操作向量。Mathf还有Lerp和LerpUnclamped这种插值函数，同样的，对于其他类型，我们也有Vector4.LerpUnclamped，Quaternion.LerpUnclamped等等。
+
+如果是在PS4 XBOX这种console上玩的话，电视屏幕要大的多，必须要把相机的FOV调到100以上，测试完了再build。如果是VR设备的话，要更大才行，这个就比较复杂了现在不考虑，有些VR会自动重新计算FOV的。
+相机的near clip记得设成一个比较小的值，比如0.01，否则相机obstruct的时候，会出现render黑框的情况。far clip根据scene的景深调节。
 
 几种平滑和插值的比较：
 Lerp is linear, works well for very fast movements, is less demanding on CPU，但是在首尾两端的移动会很sudden不平滑。

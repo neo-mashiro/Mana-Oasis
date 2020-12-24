@@ -41,6 +41,12 @@ namespace Utilities {
         private void OnApplicationQuit() => _quit = true;
         private void OnDestroy() => _quit = true;
         
+        /// <summary>
+        /// This is only called when the singleton is loaded for the first time.
+        /// When a new scene is loaded, Awake() or Start() won't be called again on the singleton we already have.
+        /// However, the singleton game object will be duplicated when loading a new scene because Unity does not know
+        /// it has survived, so Awake() will then be called on the new duplicate, and immediately destroys itself.
+        /// </summary>
         private void Awake() {
             if (_instance == null) {
                 _instance = this as T;

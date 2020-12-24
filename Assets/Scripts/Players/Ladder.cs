@@ -7,7 +7,7 @@ namespace Players {
     public class Ladder : MonoBehaviour {
         
         [Tooltip("A vector relative to the ladder's transform position that defines the bottom anchor point.")]
-        [SerializeField] private Vector3 vectorToBottomAnchor;
+        [SerializeField] private Vector3 vectorToBottomAnchor = new Vector3(0, 0.3f, 0.5f);
         [SerializeField] private float ladderSegmentLength;
 
         private Vector3 BottomAnchorPoint => transform.position + transform.TransformVector(vectorToBottomAnchor);

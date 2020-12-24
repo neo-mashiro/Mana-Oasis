@@ -8,7 +8,8 @@ namespace Players {
     
     public class PlayerController : MonoBehaviour, ICharacterController {
         
-        public KinematicCharacterMotor motor;
+        [SerializeField] private PlayerCamera playerCamera;
+        [SerializeField] private KinematicCharacterMotor motor;
 
         [Header("Ground Movement")]
         [SerializeField] private float maxStableMoveSpeed = 10f;
@@ -55,9 +56,8 @@ namespace Players {
         [SerializeField] private OrientationMode orientationMode = OrientationMode.TowardsGravity;
         [SerializeField] private float orientationSharpness = 10f;
         
-        [Header("References")]
+        [Header("Mesh and costumes")]
         [SerializeField] private Transform meshRoot;
-        [SerializeField] private Transform cameraFollowPoint;
 
         [Header("Audio Clips")]
         [SerializeField] private AudioClip footstepSound;
@@ -67,6 +67,8 @@ namespace Players {
         [SerializeField] private AudioClip swimSound;
 
         // public properties
+        public KinematicCharacterMotor Motor => motor;
+        
         public Vector3 Gravity {
             get => gravity;
             set => gravity = value;
@@ -76,14 +78,9 @@ namespace Players {
             get => meshRoot;
             set => meshRoot = value;
         }
-        
-        public Transform CameraFollowPoint {
-            get => cameraFollowPoint;
-            set => cameraFollowPoint = value;
-        }
 
         // private properties
-        private ControlMode ControlMode { get; set; }
+        public ControlMode ControlMode { get; private set; }
         
         private Ladder ActiveLadder { get; set; }
         
@@ -261,9 +258,10 @@ namespace Players {
                             TransitionToMode(ControlMode.Climb);
                         }
                         else if (ControlMode == ControlMode.Climb) {
-                            ClimbState = ClimbState.DeAnchor;
-                            _ladderTargetPosition = motor.TransientPosition;
-                            _ladderTargetRotation = _rotationBeforeClimbing;
+                            // ClimbState = ClimbState.DeAnchor;
+                            // _ladderTargetPosition = motor.TransientPosition;
+                            // _ladderTargetRotation = _rotationBeforeClimbing;
+                            TransitionToMode(ControlMode.Default);
                         }
                     }
                 }
@@ -271,9 +269,9 @@ namespace Players {
 
             // essential input
             var moveVector = Vector3.ClampMagnitude(new Vector3(inputs.MovementX, 0f, inputs.MovementZ), 1f);
-            var cameraPlanarDirection = Vector3.ProjectOnPlane(inputs.CameraRotation * Vector3.forward, motor.CharacterUp).normalized;
+            var cameraPlanarDirection = Vector3.ProjectOnPlane(playerCamera.transform.rotation * Vector3.forward, motor.CharacterUp).normalized;
             if (cameraPlanarDirection.sqrMagnitude == 0f) {
-                cameraPlanarDirection = Vector3.ProjectOnPlane(inputs.CameraRotation * Vector3.up, motor.CharacterUp).normalized;
+                cameraPlanarDirection = Vector3.ProjectOnPlane(playerCamera.transform.rotation * Vector3.up, motor.CharacterUp).normalized;
             }
             var cameraPlanarRotation = Quaternion.LookRotation(cameraPlanarDirection, motor.CharacterUp);
 
@@ -282,18 +280,18 @@ namespace Players {
                     _moveInputVector = cameraPlanarRotation * moveVector;
 
                     // C# 8.0 switch expression feature not yet supported in Unity
-                    // _lookInputVector = inputs.CameraPerspective switch {
+                    // _lookInputVector = playerCamera.CameraPerspective switch {
                     //     Perspective.FirstPerson => cameraPlanarDirection,
                     //     Perspective.ThirdPerson => _moveInputVector.normalized,
                     //     _ => _lookInputVector
                     // };
 
                     // in first person view, player rotates towards camera (mouse rotation)
-                    if (inputs.CameraPerspective == Perspective.FirstPerson) {
+                    if (playerCamera.CameraPerspective == Perspective.FirstPerson) {
                         _lookInputVector = cameraPlanarDirection;
                     }
                     // in third person view, player rotates towards movement
-                    else if (inputs.CameraPerspective == Perspective.ThirdPerson) {
+                    else if (playerCamera.CameraPerspective == Perspective.ThirdPerson) {
                         _lookInputVector = _moveInputVector.normalized;
                     }
 
@@ -318,15 +316,15 @@ namespace Players {
                     break;
 
                 case ControlMode.Free:
-                    _moveInputVector = inputs.CameraRotation * moveVector;
+                    _moveInputVector = playerCamera.transform.rotation * moveVector;
                     
                     // C# 8.0 feature not yet supported by Unity
-                    // _lookInputVector = inputs.CameraPerspective switch {
+                    // _lookInputVector = playerCamera.CameraPerspective switch {
                     //     Perspective.FirstPerson => cameraPlanarDirection,
                     //     Perspective.ThirdPerson => _moveInputVector.normalized,
                     //     _ => _lookInputVector
                     // };
-                    switch (inputs.CameraPerspective) {
+                    switch (playerCamera.CameraPerspective) {
                         case Perspective.FirstPerson:
                             _lookInputVector = cameraPlanarDirection;
                             break;
@@ -340,15 +338,15 @@ namespace Players {
                     break;
 
                 case ControlMode.Swim:
-                    _moveInputVector = inputs.CameraRotation * moveVector;
+                    _moveInputVector = playerCamera.transform.rotation * moveVector;
                     
                     // C# 8.0 feature not yet supported by Unity
-                    // _lookInputVector = inputs.CameraPerspective switch {
+                    // _lookInputVector = playerCamera.CameraPerspective switch {
                     //     Perspective.FirstPerson => cameraPlanarDirection,
                     //     Perspective.ThirdPerson => _moveInputVector.normalized,
                     //     _ => _lookInputVector
                     // };
-                    switch (inputs.CameraPerspective) {
+                    switch (playerCamera.CameraPerspective) {
                         case Perspective.FirstPerson:
                             _lookInputVector = cameraPlanarDirection;
                             break;
@@ -815,6 +813,11 @@ namespace Players {
 
         public void OnDiscreteCollisionDetected(Collider hitCollider) {
             
+        }
+        
+        public void AddIgnoredColliders(IEnumerable<Collider> colliders) {
+            ignoredColliders.Clear();
+            ignoredColliders.AddRange(colliders);
         }
 
     }

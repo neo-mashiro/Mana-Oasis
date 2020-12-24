@@ -21,7 +21,7 @@ namespace Environment {
                 var controller = other.GetComponent<PlayerController>();
                 if (controller) {
                     var destination = teleportTo.transform;
-                    controller.motor.SetPositionAndRotation(destination.position, destination.rotation);
+                    controller.Motor.SetPositionAndRotation(destination.position, destination.rotation);
                     OnPlayerTeleport(controller);
                     teleportTo.Teleported = true;
                 }

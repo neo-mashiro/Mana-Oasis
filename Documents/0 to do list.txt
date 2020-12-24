@@ -2,11 +2,15 @@
 记得发邮件给ayoub让他介绍下有什么好的montreal的unity的岗位，他人脉广。ayoub还是非常赞的。。。。。
 不要去考Unity的资格证书，不值得的，专心加速把自己的游戏做出来。
 
-爬梯子，能爬了以后，让free中可以抓住梯子。
-anchor和deAnchor后面加上动画。
-在梯子上禁用FPS视角，强制切换为TPS。如果爬之前是FPS，等玩家爬完了以后再切回FPS。爬梯子的时候，不要设计攻击场景，就老老实实爬，别增加复杂性。
-坡度梯子的时候，相机旋转很晕，能不能改成不在character plane上旋转？？？而是按Vector3.Up旋转？（只要不在坡上搭梯子就行了）
+测一下SceneUtils的功能。
+
 为什么deanchor以后要回到原来的rotation？能不能回到release point的rotation？然后把release point的rotation提前设好就行了？
+从梯子上正常爬下来已经可以了，再改一下从梯子上按E掉下来的rotation就好了。这个也好了。
+再改一下，不让玩家从梯子后方爬上去，必须从正面。Gizmos里，把ladder的up向量画出来，然后看下做个dot product判断正负号就行了。
+
+能不能把trigger改成普通的collider？只要合理的设置vectorToBottomAnchor的值，保证gizmo那条线离ladder有段z方向的距离就好了。比如z方向距离0.5，差不多正好是玩家的capsule半径，这样玩家climb的时候既不会collide到梯子，同时手脚又正好能碰到梯子，动画可以很逼真。为了动画的逼真，梯子的segment设的密集一点，不要一个很长的梯子只有几段，看上去好像玩家在爬空气一样，最好每0.25距离就有个梯子的bar。
+
+飞行状态下相机的白边（黑边问题），去参考Brackeys的那个初期视频，里面有讲原因，等换成root motion了再边测边调。一个最简单的方法是，当FPS第一视角的时候，让相机把character的头部occlude mask掉，就好了，只要保证镜子里反射的内容能照出来就行。我已经搞定了，把followSharpness调高就行了。
 
 test
 从free状态飞到水里。
@@ -23,6 +27,7 @@ water用trigger collider没问题，但是ladder呢，用trigger的话就可以�
 把root motion用Shirley做进去，先不用管头部转动的动画（FPS下应该头部随着相机转动的，水平和垂直都可以）
 试试看animation rigging
 https://www.youtube.com/watch?v=Htl7ysv10Qs
+anchor和deAnchor后面加上动画。
 
 refactor玩家和相机的控制脚本
 refactor planet和teleporter的脚本
@@ -35,10 +40,19 @@ refactor planet和teleporter的脚本
 
 利用cinemachine和timeline制作并测试一下玩家的cutscene，利用default到Charging state的转换。
 
+学习Unity UI 1.0.0 （UGUI）
+Unity UI Package也叫做UGUI，是官方的扩展package，就是目前版本的editor里自带的UI工具。目前主要用这个做UI开发，认真学一下。
+UI Toolkit是Unity还在开发中的新系统，目前在preview阶段，还有很多bug和功能不全，暂时观望。
+UGUI和UI Toolkit都是Unity官方团队开发的，目前uGUI用户最多，也还在更新release，但官方说UI Toolkit是他们的重心。未来应该是需要migrate到UI Toolkit，但是具体要等多少年UI Toolkit才能dominate，就很难说了，估计起码要两三年。
+切到UI界面，或者弹出UI菜单的时候，要启用鼠标cursor。
+Cursor.visible = true;
+Cursor.lockState = CursorLockMode.Confined;
+
 开始搞玩家的RPG战斗系统了！！！！！！先学习视频，确定好架构和设计！！！！
 https://www.youtube.com/watch?v=FGVkio4bnPQ  // 工厂模式
 https://www.youtube.com/watch?v=nqAHJmpWLBg  // 基于reflection的比较高级的C# Architecture from Jason
 https://www.youtube.com/watch?v=G1bd75R10m4  // State Machine
+melee combat用第三人称，ranged combat用第一人称。就算是TPS视角，也要在屏幕中间加一个很淡的crosshair（当鼠标移到攻击对象身上时，动态高亮）
 然后，开始研究设计怎么和序列化搭配！！！！把SAVE LOAD的功能和存储数据的方式（数据库或简单文本等等）实现出来！！！！
 然后，开始搞仓库系统！！！试试看scriptable object。
 学习ScriptableObject Tutorial and Template:
@@ -61,12 +75,13 @@ https://www.youtube.com/watch?v=Yy7Dt2usGy0
 不要浪费时间去学习老的Input Manager体系，马上就被淘汰了，新的Input包很牛逼，功能非常强大，可以各种bind事件，根据场景切换功能什么的，是未来的大趋势。
 2. Unity的2020 LTS版本出来以后，migrate到新版本的Unity，届时，Unity会支持C# 8.0的新语法和功能，包括nullable reference类型以及default interface implementations之类的。当Interface可以支持default代码实现的时候，传统的OOP继承就基本上没有用武之地了。
 
+！！！！！切换到2020LTS的时候，用不用新的Input System包再看情况，但是所有脚本都要重新过一遍，把标注了【C# 8.0 feature not yet supported】的注释全部拿掉，替换之前的非switch expression语法版本。
+
 继续刷Jasper的object management教程，render光照等等
 
-学习Unity UI 1.0.0 （UGUI）
-Unity UI Package也叫做UGUI，是官方的扩展package，就是目前版本的editor里自带的UI工具。目前主要用这个做UI开发，认真学一下。
-UI Toolkit是Unity还在开发中的新系统，目前在preview阶段，还有很多bug和功能不全，暂时观望。
-UGUI和UI Toolkit都是Unity官方团队开发的，目前uGUI用户最多，也还在更新release，但官方说UI Toolkit是他们的重心。未来应该是需要migrate到UI Toolkit，但是具体要等多少年UI Toolkit才能dominate，就很难说了，估计起码要两三年。
+开工做场景切换的功能，用SceneManager，为此，需要把player的controller和相机之类的脚本，改成DontDestroyOnLoad，参考这个来实现，好好测一下：
+https://stackoverflow.com/questions/36163574/duplicates-because-of-dontdestroyonload
+同时，把preload scene和一个初步的splash screen scene搭起来，简单动画即可。
 
 研究学习一下DOTween Pro的用法，这个是用来做animation的，主要功能是interpolate一个个的keyframe.
 

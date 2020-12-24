@@ -7,31 +7,11 @@ namespace Players {
         [SerializeField] private PlayerController playerController;
         [SerializeField] private PlayerCamera playerCamera;
 
-        private void Start() {
-            Cursor.lockState = CursorLockMode.Locked;
-            playerCamera.SetFollowTarget(playerController.CameraFollowPoint);
-            playerCamera.AddIgnoredColliders(playerController.GetComponentsInChildren<Collider>());
-        }
+        private void Start() => Cursor.lockState = CursorLockMode.Locked;
+        private void Update() => UpdateCharacter();
+        private void LateUpdate() => UpdateCamera();
 
-        private void Update() {
-            if (Input.GetMouseButtonDown(0)) {
-                Cursor.visible = false;
-                Cursor.lockState = CursorLockMode.Locked;
-            }
-
-            if (Input.GetKeyDown(KeyCode.Escape)) {
-                Cursor.visible = true;
-                Cursor.lockState = CursorLockMode.None;
-            }
-
-            HandleCharacterInput();
-        }
-
-        private void LateUpdate() {
-            HandleCameraInput();
-        }
-
-        private void HandleCharacterInput() {
+        private void UpdateCharacter() {
             // to be modified when migrating to the new Input System package
             var characterInputs = new PlayerCharacterInputs {
                 MovementZ = Input.GetAxisRaw("Vertical"),
@@ -42,24 +22,21 @@ namespace Players {
                 CrouchUp = Input.GetKeyUp(KeyCode.LeftControl),
                 CrouchHeld = Input.GetKey(KeyCode.LeftControl),
                 FreeModeToggled = Input.GetKeyUp(KeyCode.X),
-                ClimbModeToggled = Input.GetKeyUp(KeyCode.E),
-                CameraRotation = playerCamera.transform.rotation,
-                CameraPerspective = playerCamera.CameraPerspective
+                ClimbModeToggled = Input.GetKeyUp(KeyCode.E)
             };
 
             playerController.ProcessInput(ref characterInputs);
         }
 
-        private void HandleCameraInput() {
-            var rotationInput = new Vector3(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y"), 0f);
-            if (Cursor.lockState != CursorLockMode.Locked) {
-                rotationInput = Vector3.zero;
-            }
+        private void UpdateCamera() {
+            var playerCameraInputs = new PlayerCameraInputs {
+                MovementX = Input.GetAxisRaw("Mouse X"),
+                MovementY = Input.GetAxisRaw("Mouse Y"),
+                ZoomInput = -Input.GetAxis("Mouse ScrollWheel"),
+                SwitchView = Input.GetMouseButtonDown(1)
+            };
 
-            var zoomInput = -Input.GetAxis("Mouse ScrollWheel");
-            var clickInput = Input.GetMouseButtonDown(1); // switch between first-person and third-person perspective
-
-            playerCamera.ProcessInput(rotationInput, zoomInput, clickInput, Time.deltaTime);
+            playerCamera.ProcessInput(ref playerCameraInputs, Time.deltaTime);
         }
 
     }

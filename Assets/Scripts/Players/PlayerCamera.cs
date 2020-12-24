@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static Utilities.MathUtils;
@@ -6,6 +7,11 @@ using static Utilities.MathUtils;
 namespace Players {
     
     public class PlayerCamera : MonoBehaviour {
+        
+        [SerializeField] private PlayerController playerController;
+        
+        [Header("Follow Target")]
+        [SerializeField] private Transform followTarget;
 
         [Header("Distance")]
         [SerializeField] private float defaultFollowDistance = 6f;
@@ -29,17 +35,16 @@ namespace Players {
         [SerializeField] private float obstructionSharpness = 1000f;
         [SerializeField] private LayerMask obstructionMask = -1;
         [SerializeField] private List<Collider> ignoredColliders = new List<Collider>();
-
-        private Vector3 TargetForward { get; set; }
-        public Perspective CameraPerspective { get; private set; }
-
-        private Transform _followTarget;
-        private Vector3 _followPosition;
         
+        public Perspective CameraPerspective { get; private set; }
+        private Vector3 TargetForward { get; set; }
+
+        private Vector3 _followPosition;
         private float _followDistance;
         private float _actualDistance;
         private float _cachedDistance;
         private float _verticalAngle;
+        private bool _perspectiveEnforced;
 
         private bool _isObstructed;
         private int _obstructionCount;
@@ -51,13 +56,20 @@ namespace Players {
             defaultVerticalAngle = Mathf.Clamp(defaultVerticalAngle, minVerticalAngle, maxVerticalAngle);
         }
 
-        private void Awake() {
+        private void Start() {
             CameraPerspective = Perspective.ThirdPerson;
+            TargetForward = followTarget.forward;
+            _followPosition = followTarget.position;
+            
             _actualDistance = _followDistance = defaultFollowDistance;
             _verticalAngle = defaultVerticalAngle;
+            
+            AddIgnoredColliders(playerController.GetComponentsInChildren<Collider>());
         }
 
-        public void ProcessInput(Vector3 rotationInput, float zoomInput, bool clickInput, float deltaTime) {
+        public void ProcessInput(ref PlayerCameraInputs inputs, float deltaTime) {
+            var rotationInput = new Vector3(inputs.MovementX, inputs.MovementY, 0f);
+            
             if (invertX) {
                 rotationInput.x *= -1f;
             }
@@ -67,55 +79,70 @@ namespace Players {
             }
 
             // handle horizontal (planar) rotation input
-            var targetUp = _followTarget.up;
+            var targetUp = playerController.ControlMode == ControlMode.Climb ? Vector3.up : followTarget.up;
             var rotationFromInput = Quaternion.Euler(targetUp * (rotationInput.x * rotationSpeed));
             TargetForward = rotationFromInput * TargetForward;
-            
             // this nested cross product operation won't change the planar direction if we are on ground
             // but if we are on a planet with self gravity field, this is required to compute the correct direction
             TargetForward = Vector3.Cross(targetUp, Vector3.Cross(TargetForward, targetUp));
+            
             var planarRotation = Quaternion.LookRotation(TargetForward, targetUp);
 
             // handle vertical rotation input
             _verticalAngle -= rotationInput.y * rotationSpeed;
-            _verticalAngle = CameraPerspective == Perspective.FirstPerson
-                ? Mathf.Clamp(_verticalAngle, -90f, 90f)
-                : Mathf.Clamp(_verticalAngle, minVerticalAngle, maxVerticalAngle);
+            if (CameraPerspective == Perspective.ThirdPerson) {
+                _verticalAngle = Mathf.Clamp(_verticalAngle, minVerticalAngle, maxVerticalAngle);
+                if (playerController.ControlMode == ControlMode.Free || playerController.ControlMode == ControlMode.Swim) {
+                    _verticalAngle = Mathf.Clamp(_verticalAngle, -45f, 45f);
+                }
+            }
+            else {
+                _verticalAngle = Mathf.Clamp(_verticalAngle, -90f, 90f);
+            }
             
             var verticalRotation = Quaternion.Euler(_verticalAngle, 0, 0);
             
             // combine planar and vertical rotations and apply
-            var targetRotation = Quaternion.Slerp(transform.rotation, planarRotation * verticalRotation, EaseFactor(rotationSharpness, deltaTime));
+            var targetRotation = planarRotation * verticalRotation;
+            targetRotation = Quaternion.Slerp(transform.rotation, targetRotation, EaseFactor(rotationSharpness, deltaTime));
             transform.rotation = targetRotation;
-
-            // switch between third-person and first-person perspective
-            if (clickInput) {
-                if (CameraPerspective == Perspective.ThirdPerson) {
-                    _cachedDistance = _followDistance;
-                    _followDistance = 0f;
-                    CameraPerspective = Perspective.FirstPerson;
+            
+            // disable perspective switches in auto and climb mode
+            if (playerController.ControlMode == ControlMode.Auto || playerController.ControlMode == ControlMode.Climb) {
+                // enforce third-person perspective when player is in auto or climb mode
+                if (CameraPerspective == Perspective.FirstPerson) {
+                    SwitchToView(Perspective.ThirdPerson);
+                    _perspectiveEnforced = true;
                 }
-                else {
-                    _followDistance = _cachedDistance;
-                    CameraPerspective = Perspective.ThirdPerson;
+            }
+            else {
+                // switch back to first-person perspective if third-person is previously enforced
+                if (_perspectiveEnforced) {
+                    SwitchToView(Perspective.FirstPerson);
+                    _perspectiveEnforced = false;
+                }
+                // switch between third-person and first-person perspective on mouse click
+                if (inputs.SwitchView) {
+                    SwitchToView(CameraPerspective == Perspective.ThirdPerson ? Perspective.FirstPerson : Perspective.ThirdPerson);
                 }
             }
 
             if (CameraPerspective == Perspective.FirstPerson) {
-                _followPosition = Vector3.Lerp(_followPosition, _followTarget.position, EaseFactor(followSharpness, deltaTime));
+                _followPosition = Vector3.Lerp(_followPosition, followTarget.position, EaseFactor(followSharpness, deltaTime));
                 _actualDistance = Mathf.Lerp(_actualDistance, _followDistance, EaseFactor(zoomSharpness, deltaTime));
                 
                 transform.position = _followPosition - targetRotation * Vector3.forward * _actualDistance;
             }
             
             else {
-                if (Mathf.Abs(zoomInput) > 0f) {
-                    zoomInput = _isObstructed ? 0f : zoomInput;  // disable zoom if camera is moved forward due to obstructions
+                if (Mathf.Abs(inputs.ZoomInput) > 0f) {
+                    // disable zoom if camera is moved forward due to obstructions
+                    var zoomInput = _isObstructed ? 0f : inputs.ZoomInput;
                     _followDistance += zoomInput * zoomSpeed;
                     _followDistance = Mathf.Clamp(_followDistance, minFollowDistance, maxFollowDistance);
                 }
 
-                _followPosition = Vector3.Lerp(_followPosition, _followTarget.position, EaseFactor(followSharpness, deltaTime));
+                _followPosition = Vector3.Lerp(_followPosition, followTarget.position, EaseFactor(followSharpness, deltaTime));
 
                 // check obstructions
                 _obstructionCount = Physics.SphereCastNonAlloc(_followPosition, obstructionCheckRadius,
@@ -148,16 +175,21 @@ namespace Players {
                 transform.position = targetPosition;
             }
         }
-        
-        public void SetFollowTarget(Transform target) {
-            _followTarget = target;
-            _followPosition = target.position;
-            TargetForward = _followTarget.forward;
-        }
-        
+
         public void AddIgnoredColliders(IEnumerable<Collider> colliders) {
             ignoredColliders.Clear();
             ignoredColliders.AddRange(colliders);
+        }
+
+        private void SwitchToView(Perspective toPerspective) {
+            CameraPerspective = toPerspective;
+            if (toPerspective == Perspective.FirstPerson) {
+                _cachedDistance = _followDistance;
+                _followDistance = 0f;
+            }
+            else {
+                _followDistance = _cachedDistance;
+            }
         }
     }
 }
