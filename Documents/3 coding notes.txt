@@ -13,6 +13,31 @@ Instead of Time.fixedDeltaTime use Time.fixedUnscaledDeltaTime?
 Instead of Time.time, use Time.unscaledTime?
 Unity manual says that we should avoid using Time.time per frame, but this is wrong. Feel free to use it, there are no performance issues, and everybody else is using it. In fact we don't have another property to use. At least, Time.time is better than timeSinceLevelLoad.
 
+关于爬梯子的设置，所有的梯子包括child全部设成Ladder layer，其中，root go加一个trigger的box collider用于检测玩家是否靠近，而每个child加一个正常的collider用于碰撞，使玩家不能穿模。top和bottom的release点，合理设置位置，尤其y方向要保持水平。top和bottom的anchor点，通过那条gizmo的线设置，保持那个vector离梯子的垂直距离正好够玩家摸得到，但又不会穿模。
+
+不要混淆point和vector的概念，所有的vector都是相对于这个go本身的position而言的，也就是在pivot模式下的那个坐标点。vector的xyz分量分别代表从position点出发，经过xyz个单位后所到达位置相对于position的方向。之前理解的vector是相对于世界坐标原点000，这个想法是错误的，那个是point不是vector。
+
+Resources文件夹是Unity的特殊文件夹，但是Resources.Load函数族很expensive，又有很多downside，所以一般都从来不用。它的问题在于：
+1. 速度慢，在runtime时load很影响性能、
+2. 按path路径load asset而不是按reference来load，就要求在代码里hard-code路径名字符串。每次asset改名字或移动到别的位置，都要改代码。
+3. 内存管理非常困难。
+4. 整个Resources文件夹都会被包含进build，所以会bloat the size of your build。对于商业游戏来说，这对销售和未来更新有致命的影响，用户不愿意让app在自己的电脑和手机上占用太大空间，也不希望未来版本升级需要额外空间。其实对于mana oasis来说，作为我的个人收藏项目，这无所谓，但如果要发布到网上，就不行了。
+Resources的好处是特别简单，直观，方便使用。什么时候适合用呢？——如果只是平时测试小功能，OK，或者你有一些比较小的asset和prefab，或者小图片之类的，而且路径是固定的保证以后不会变，并且只是偶尔会被load，不会被频繁的load，那可以考虑一下。
+另外，Resources asset都在本地非常不灵活，如果用AssetBundle或Addressable的话，asset完全可以在云端在服务器上，作为DLC的形式存在，这样app的size就可以非常的小，方便下载，等玩家需要用到asset的时候，再实时的下载DLC就可以了。对于公司来说，这样也便于未来游戏更新，再怎么加内容，都不会让app size变大。
+Streaming Assets有点类似于Resources文件夹，整个文件夹会原分不动的copy到build中去，然后runtime时可以用StreamReader以stream流的形式读取，适合于视频文件或音乐BGM之类的非常大的文件。通过stream读取的形式，可以避免非常大的文件资源被一下子load到内存里，节省资源。不支持WebGL。至于build时具体被copy到哪个文件夹哪个位置，取决于target platform，对于windows mac linux ios android和console等等，位置都不一样。
+
+AssetBundle和Addressable是作为Resources以及StreamingAssets的替代品出现的，通常是更好的选择。
+AssetBundle用起来很复杂，需要自己手动unload不再需要的asset以释放资源，这很困难，而且特别难维护。直接跳过吧。
+Addressable是未来的主流，很强大，认真学一下。有了Addressable，很多东西都可以做成云端DLC的形式存在，StreamingAssets就基本没用处了。未来可以考虑用Unity自带的Cloud Content Delivery产品，可以免费有50个GB的云端存储，用于部署自己的游戏asset：https://unity.com/products/cloud-content-delivery
+
+UI的Canvas是一切UI内容的容器，是最上层的一个container，所有UI内容都会被render在canvas里面，通常设置canvas的大小为scale with screen size并指定好分辨率。一个scene可以有多个canvas，用于不同的功能，都是on top of scene被render的，可以设置canvas的sort order，数值越大的会被最后render，所以会覆盖掉其他的canvas，比如loading screen就要设成999保证它永远在屏幕最前面。
+Panel是Canvas下面一级的container，代表canvas中一块小区域，用于将canvas中的相关联的UI元素group起来，以此来有效分类和组织canvas的不同元素。在一个panel上，可以添加Canvas Group component，用于调节整个panel的透明度什么的。一个panel必须有且只能有一个graphics component，要么是Image，要么是RawImage，用于render这个panel。Image成分reference的是一个sprite，通常用于显示一张图片，比如loading screen的背景图，是静态的。RawImage成分reference的是一个texture，通常用于显示每一帧都在不断变化的内容，texture在runtime的每帧都在变。对于每帧变化的内容，sprite不适合，因为Sprite.Create()又慢又占内存。RawImage灵活度更高，接受任何Texture，提供更多动画和从代码中update的功能，而Image成分相对简单单一，只接受Sprite（Sprite只是Texture的一种）。大多数时候，我们用的都是Image成分，配合一个sprite，很少需要在UI中显示动态的内容的。
+
+Texture的本质是bitmap，是用来贴在3D物体的mesh上用来render的。在Unity中，每个go的mesh renderer下面都要有一个material，通常一个mesh对应一个material，如果有submesh可以有多个material，而每个material都是由一个或多个texture加上shader所组成的，material是把texture和shader结合起来所构成的材质。bitmap就是一个二维矩阵，每个元素对应一个pixel，用来贴在其他物体上。有时候texture也可以是cubemap，即三维矩阵，用来贴在skybox上。
+Sprite是一个2D的图形物体，相当于就是一个2D的game object，对应的mesh是flat平的，这个平的mesh上已经有texture了。Sprite是texture应用到go上的一种特殊形式，任何一个texture都可以转换成sprite。由于它的mesh是平的，Sprite是通过Sprite Renderer渲染的，而不是Mesh Renderer。
+简而言之，texture是主要用来控制一个3D物体的外观的，而当你需要显示一张2D图片的时候，无论是动态变的还是静态的，永远是用sprite。
+不过要注意一点，如果需要在runtime时load sprite，一定要把sprite提前创建好，导入图片后在import settings中设置好点击apply，对于大图这个要等上好几秒，但是之后runtime直接load它就很快了。如果一开始没有在import settings中apply创建sprite，而是直接runtime调用Sprite.Create()方法，虽然可行但是非常慢，要卡好几秒。
+
 SetActive is for gameObjects（go）and enabled is for Components on the Object，所以我们我们设置active状态是针对gameObjects而言的，而当具体某个gameObject被active以后，在那个object的挂载的component脚本中，我们要用onEnable去判断（判断这个脚本component被enable了）。设置enable flag则是针对具体某个component而言的。换句话说，setactive是把一整个gameobject前面的勾打上或去掉，设置enable=true or false是把某个component前面的勾打上或去掉。
 判断一个go是否active通常用isActiveInHierarchy，也就是说必须它的所有parent也active，否则只要有一个parent不是active，哪怕这个go本身是active，它也不会被update不会起作用。判断一个component是否enabled通常用isActiveAndEnabled，就是这个component对应的go首先要active然后它enabled才有意义，否则只看enabled为true并不代表这个component在起作用，很可能它attach的go是inactive的。
 
@@ -41,6 +66,12 @@ Zenject这种Injection框架太复杂了，现在没时间去消化，工作了�
 如何carry某个go比如玩家和相机across scenes？？？
 1. 如果一个go是在每个scene中都必要的，用DontDestroyOnLoad()比较方便，其实就是做成singleton的模式，只是要注意destroy掉在新场景里的duplicate。
 2. 如果只是想临时把一个go带到下个场景里，有的场景需要该go，有的不需要，所以该go只是在某些相邻的场景里才存活，用SceneManager.MoveGameObjectToScene函数就可以了，该方法要求目标的场景必须已经被加载了，否则不能move。所以就需要在当前scene还在的时候，additively加载新场景，加载完了再unload当前scene，这就会使得两个scene会同时占用memory，如果两个scene都非常庞大的话，内存又比较有限，就不要用了。
+
+怎样合理的load new scene并且unload current scene？
+1. 如果new scene场景不大，比如进入另一个房间或战斗场之类的，直接additively在后台异步地load new scene就好了，load完成了再unload current，则会自动切换到new scene。记得要用异步的LoadSceneAsync方法，一般都不要用load single scene的LoadScene函数。
+2. 如果两个场景都很大，比如一般的主场景切换，additive的模式会把两个同时load进内存，这对memory要求很高，不是个好的选择。最好的做法是，每次主场景切换的时候，中间都做一个loading screen作为过渡的场景，显示图片和一个进度条。由于loading screen非常的小，所以additve没问题，先load这个过渡场景，好了之后unload当前场景，然后再load新场景，好了之后unload这个过渡场景，也就是做两次这个动作。这样就可以无缝切换了。
+
+SceneManager.sceneLoaded是用来指定当新场景load好之后需要call的callback，但不要乱用，不好追踪。大多数事情不需要放在这里面去做，在新场景的go的Awake或者Start里面做就行了，最好是game manager里做，这样设计更清晰。sceneLoaded的callback是在新场景的awake之后执行的，并不是最开始跑。只有当涉及到一些需要跨scene的逻辑，比如move某些go到新场景什么的，才有必要放在sceneLoaded里面。
 
 如果你确定某个go或component不会被destroy，那么判断它是否为null时，用!ReferenceEquals(go, null)，相比而言，!=null非常昂贵。
 

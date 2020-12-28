@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static Utilities.MathUtils;
+using NaughtyAttributes;
 
 namespace Players {
     
@@ -10,9 +11,11 @@ namespace Players {
         
         [SerializeField] private PlayerController playerController;
         
+        [HorizontalLine(color: EColor.Red)]
         [Header("Follow Target")]
         [SerializeField] private Transform followTarget;
 
+        [HorizontalLine(color: EColor.Pink)]
         [Header("Distance")]
         [SerializeField] private float defaultFollowDistance = 6f;
         [SerializeField] private float minFollowDistance = 3f;
@@ -21,6 +24,7 @@ namespace Players {
         [SerializeField] private float zoomSharpness = 10f;
         [SerializeField] private float followSharpness = 10000f;
 
+        [HorizontalLine(color: EColor.Violet)]
         [Header("Rotation")]
         [SerializeField] private bool invertX = false;
         [SerializeField] private bool invertY = false;
@@ -30,6 +34,7 @@ namespace Players {
         [SerializeField] private float rotationSpeed = 1f;
         [SerializeField] private float rotationSharpness = 10000f;
 
+        [HorizontalLine(color: EColor.Green)]
         [Header("Obstruction")]
         [SerializeField] private float obstructionCheckRadius = 0.1f;
         [SerializeField] private float obstructionSharpness = 1000f;

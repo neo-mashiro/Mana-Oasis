@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using KinematicCharacterController;
 using UnityEngine;
 using static Utilities.MathUtils;
+using KinematicCharacterController;
+using NaughtyAttributes;
 
 namespace Players {
     
@@ -11,17 +12,20 @@ namespace Players {
         [SerializeField] private PlayerCamera playerCamera;
         [SerializeField] private KinematicCharacterMotor motor;
 
+        [HorizontalLine(color: EColor.Red)]
         [Header("Ground Movement")]
         [SerializeField] private float maxStableMoveSpeed = 10f;
         [SerializeField] private float stableMovementSharpness = 15f;
         [SerializeField] private float rotationSharpness = 20f;
         [SerializeField] private Vector3 gravity = new Vector3(0, -30f, 0);
 
+        [HorizontalLine(color: EColor.Blue)]
         [Header("Air Movement")]
         [SerializeField] private float maxAirMoveSpeed = 10f;
         [SerializeField] private float airAccelerationSpeed = 10f;
         [SerializeField] private float airDrag = 0.1f;
 
+        [HorizontalLine(color: EColor.Black)]
         [Header("Jump")]
         [SerializeField] private bool allowJumpingWhenSliding = false;
         [SerializeField] private bool allowDoubleJump = false;
@@ -31,13 +35,16 @@ namespace Players {
         [SerializeField] private float jumpPreGroundingGraceTime = 0.1f;
         [SerializeField] private float jumpPostGroundingGraceTime = 0.1f;
         
+        [HorizontalLine(color: EColor.Green)]
         [Header("Auto Mode")]
         [SerializeField] private float autoSpeed = 15f;
         
+        [HorizontalLine(color: EColor.Orange)]
         [Header("Free Mode")]
-        [SerializeField] private float freeMoveSpeed = 20f;
+        [SerializeField] private float freeMoveSpeed = 15f;
         [SerializeField] private float freeSharpness = 15;
         
+        [HorizontalLine(color: EColor.Indigo)]
         [Header("Swim Mode")]
         [SerializeField] private Transform swimmingReferencePoint;
         [SerializeField] private LayerMask waterLayer;
@@ -46,19 +53,23 @@ namespace Players {
         [SerializeField] private float swimmingOrientationSharpness = 2f;
         [SerializeField] private float gravityUnderWater = -0.1f;
         
+        [HorizontalLine(color: EColor.Pink)]
         [Header("Climb Mode")]
         [SerializeField] private float climbingSpeed = 4f;
         [SerializeField] private float anchoringDuration = 0.5f;
         [SerializeField] private LayerMask ladderLayer;
 
+        [HorizontalLine(color: EColor.Violet)]
         [Header("Obstruction and Orientation")]
         [SerializeField] private List<Collider> ignoredColliders = new List<Collider>();
         [SerializeField] private OrientationMode orientationMode = OrientationMode.TowardsGravity;
-        [SerializeField] private float orientationSharpness = 10f;
+        [SerializeField] private float orientationSharpness = 20f;
         
+        [HorizontalLine(color: EColor.Yellow)]
         [Header("Mesh and costumes")]
         [SerializeField] private Transform meshRoot;
 
+        [HorizontalLine(color: EColor.White)]
         [Header("Audio Clips")]
         [SerializeField] private AudioClip footstepSound;
         [SerializeField] private AudioClip jumpSound;
@@ -136,8 +147,7 @@ namespace Players {
         private float _anchoringTimer = 0f;
         private Vector3 _anchoringStartPosition = Vector3.zero;
         private Quaternion _anchoringStartRotation = Quaternion.identity;
-        private Quaternion _rotationBeforeClimbing = Quaternion.identity;
-        
+
         // velocity from extra force
         private Vector3 _extraVelocity = Vector3.zero;
         
@@ -200,8 +210,6 @@ namespace Players {
                     break;
                 
                 case ControlMode.Climb:
-                    _rotationBeforeClimbing = motor.TransientRotation;
-
                     motor.SetMovementCollisionsSolvingActivation(false);
                     motor.SetGroundSolvingActivation(false);
                     ClimbState = ClimbState.Anchor;
@@ -241,26 +249,51 @@ namespace Players {
         }
 
         public void ProcessInput(ref PlayerCharacterInputs inputs) {
-            // check and apply mode transitions
+            // check free toggle input and apply mode transitions
             if (inputs.FreeModeToggled && !_waterZone) {
                 TransitionToMode(ControlMode == ControlMode.Free ? ControlMode.Default : ControlMode.Free);
             }
 
+            // check climb toggle input and apply mode transitions
             if (inputs.ClimbModeToggled && ControlMode != ControlMode.Auto && ControlMode != ControlMode.Swim) {
                 var hits = motor.CharacterOverlap(motor.TransientPosition, motor.TransientRotation,
                     _probedColliders, ladderLayer, QueryTriggerInteraction.Collide);
                 
-                if (hits > 0 && !ReferenceEquals(_probedColliders[0], null)) {
-                    var ladder = _probedColliders[0].gameObject.GetComponent<Ladder>();
+                if (hits > 0) {
+                    Ladder ladder = null;
+                    
+                    // the target box trigger collider is often the outermost one that encloses the entire ladder,
+                    // it will be the last one we hit when doing a capsule overlap cast, so we loop in reverse order
+                    for (var i = hits - 1; i >= 0; i--) {
+                        if (!ReferenceEquals(_probedColliders[i], null)) {
+                            ladder = _probedColliders[i].gameObject.GetComponent<Ladder>();
+                            if (ladder) {
+                                break;
+                            }
+                        }
+                    }
+                    
                     if (ladder) {
+                        // player can only climb ladders in default or free mode
                         if (ControlMode == ControlMode.Default || ControlMode == ControlMode.Free) {
-                            ActiveLadder = ladder;
-                            TransitionToMode(ControlMode.Climb);
+                            // if player is close enough to the top release point, transition to climb mode directly
+                            if (motor.TransientPosition.y - ladder.TopReleasePoint.position.y >= -0.1f) {
+                                ActiveLadder = ladder;
+                                TransitionToMode(ControlMode.Climb);
+                            }
+                            // otherwise, player can only climb onto the ladder from the front side, not the back side
+                            else {
+                                var directionFromLadder = motor.TransientPosition - ladder.transform.position;
+                                if (Vector3.Dot(directionFromLadder, ladder.transform.forward) < -0.05f) {
+                                    ActiveLadder = ladder;
+                                    TransitionToMode(ControlMode.Climb);
+                                }
+                            }
                         }
                         else if (ControlMode == ControlMode.Climb) {
-                            // ClimbState = ClimbState.DeAnchor;
-                            // _ladderTargetPosition = motor.TransientPosition;
-                            // _ladderTargetRotation = _rotationBeforeClimbing;
+                            ClimbState = ClimbState.DeAnchor;
+                            _ladderTargetPosition = motor.TransientPosition;
+                            _ladderTargetRotation = motor.TransientRotation;
                             TransitionToMode(ControlMode.Default);
                         }
                     }

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,10 +13,7 @@ namespace Managers {
     public sealed class GameManager : MonoSingleton<GameManager> {
         
         [SerializeField] private GameObject loadingScreenPanel;
-        [SerializeField] private float loadingScreenFadingSpeed = 1f;
-
-        [SerializeField] private Sprite testSprite;  // replace this with a real loading screen image asset
-                                                     // make a dictionary so that each destination scene has a unique loading screen image
+        [SerializeField] private float loadingScreenFadingSpeed = 2f;
 
         private Image _loadingScreenImage;
         private Slider _loadingBar;
@@ -68,7 +63,7 @@ namespace Managers {
 
         private void ResetLoadingScreen(string sceneName) {
             _loadingScreenCanvasGroup.alpha = 0;  // reset the canvas group to transparent
-            _loadingScreenImage.sprite = testSprite;  // the sceneName argument decides which sprite image to use 
+            _loadingScreenImage.sprite = Resources.Load<Sprite>($"Loading Screens/{sceneName}");
             _loadingBar.value = 0;
             _loadingBarText.SetText("{0}%", 0);
             
@@ -78,7 +73,7 @@ namespace Managers {
         private IEnumerator SmoothTransitionToScene(string sceneName) {
             // the loading screen fades in and hides the current scene
             while (_loadingScreenCanvasGroup.alpha < 1) {
-                _loadingScreenCanvasGroup.alpha += 0.02f;
+                _loadingScreenCanvasGroup.alpha += 0.02f * loadingScreenFadingSpeed;
                 yield return null;
             }
             
@@ -89,7 +84,7 @@ namespace Managers {
             // smoothly progress the loading bar (fake), we have to fake here since there's no way to track the real
             // loading progress in Unity, the loadOperation.progress property cannot report values between 0 and 0.9
             while (!loadOperation.isDone) {
-                _loadingBar.value += Time.unscaledDeltaTime * loadingScreenFadingSpeed;
+                _loadingBar.value += Time.unscaledDeltaTime;
                 _loadingBar.value = Mathf.Min(_loadingBar.value, 1);
                 _loadingBarText.SetText("{0}%", (int) (_loadingBar.value * 100f));
                 yield return null;
@@ -97,7 +92,7 @@ namespace Managers {
             
             // if the loading bar hasn't yet hit 100% when the new scene is already loaded, progress it until 100%
             while (_loadingBar.value < 1) {
-                _loadingBar.value += Time.unscaledDeltaTime * loadingScreenFadingSpeed * 1.5f;
+                _loadingBar.value += Time.unscaledDeltaTime * 1.5f;
                 _loadingBarText.SetText("{0}%", (int) (_loadingBar.value * 100f));
                 yield return null;
             }
@@ -107,27 +102,11 @@ namespace Managers {
                 
             // the loading screen fades out and the new scene gets rendered
             while (_loadingScreenCanvasGroup.alpha > 0) {
-                _loadingScreenCanvasGroup.alpha -= 0.02f;
+                _loadingScreenCanvasGroup.alpha -= 0.02f * loadingScreenFadingSpeed;
                 yield return null;
             }
 
             loadingScreenPanel.SetActive(false);
-        }
-        
-        private string scenename = "CharacterAndCinemachine";
-        private void Update() {
-            if (Input.GetKeyDown(KeyCode.Alpha1)) {
-                if (scenename.Equals("CharacterAndCinemachine")) {
-                    scenename = "Restopia";
-                }
-                else if (scenename.Equals("Restopia")) {
-                    scenename = "Top-Down Demo 01";
-                }
-                else if (scenename.Equals("Top-Down Demo 01")) {
-                    scenename = "CharacterAndCinemachine";
-                }
-                SwitchSceneWithLoadingScreen(scenename);
-            }
         }
     }
 }
