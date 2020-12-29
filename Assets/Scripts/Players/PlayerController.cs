@@ -12,20 +12,20 @@ namespace Players {
         [SerializeField] private PlayerCamera playerCamera;
         [SerializeField] private KinematicCharacterMotor motor;
 
-        [HorizontalLine(color: EColor.Red)]
+        [HorizontalLine(3, EColor.Red)]
         [Header("Ground Movement")]
         [SerializeField] private float maxStableMoveSpeed = 10f;
         [SerializeField] private float stableMovementSharpness = 15f;
         [SerializeField] private float rotationSharpness = 20f;
         [SerializeField] private Vector3 gravity = new Vector3(0, -30f, 0);
 
-        [HorizontalLine(color: EColor.Blue)]
-        [Header("Air Movement")]
+        [HorizontalLine(3, EColor.Blue)]
+        [Header("Air Movement (in default mode)")]
         [SerializeField] private float maxAirMoveSpeed = 10f;
         [SerializeField] private float airAccelerationSpeed = 10f;
         [SerializeField] private float airDrag = 0.1f;
 
-        [HorizontalLine(color: EColor.Black)]
+        [HorizontalLine(3, EColor.Black)]
         [Header("Jump")]
         [SerializeField] private bool allowJumpingWhenSliding = false;
         [SerializeField] private bool allowDoubleJump = false;
@@ -35,16 +35,17 @@ namespace Players {
         [SerializeField] private float jumpPreGroundingGraceTime = 0.1f;
         [SerializeField] private float jumpPostGroundingGraceTime = 0.1f;
         
-        [HorizontalLine(color: EColor.Green)]
+        [HorizontalLine(3, EColor.Green)]
         [Header("Auto Mode")]
         [SerializeField] private float autoSpeed = 15f;
         
-        [HorizontalLine(color: EColor.Orange)]
-        [Header("Free Mode")]
-        [SerializeField] private float freeMoveSpeed = 15f;
-        [SerializeField] private float freeSharpness = 15;
+        [HorizontalLine(3, EColor.Orange)]
+        [Header("Air Mode")]
+        [SerializeField] private float airMoveSpeed = 15f;
+        [SerializeField] private float airSharpness = 15;
+        [SerializeField] private float maxAltitude = 400;
         
-        [HorizontalLine(color: EColor.Indigo)]
+        [HorizontalLine(3, EColor.Indigo)]
         [Header("Swim Mode")]
         [SerializeField] private Transform swimmingReferencePoint;
         [SerializeField] private LayerMask waterLayer;
@@ -53,23 +54,24 @@ namespace Players {
         [SerializeField] private float swimmingOrientationSharpness = 2f;
         [SerializeField] private float gravityUnderWater = -0.1f;
         
-        [HorizontalLine(color: EColor.Pink)]
+        [HorizontalLine(3, EColor.Pink)]
         [Header("Climb Mode")]
         [SerializeField] private float climbingSpeed = 4f;
         [SerializeField] private float anchoringDuration = 0.5f;
         [SerializeField] private LayerMask ladderLayer;
 
-        [HorizontalLine(color: EColor.Violet)]
+        [HorizontalLine(3, EColor.Violet)]
         [Header("Obstruction and Orientation")]
-        [SerializeField] private List<Collider> ignoredColliders = new List<Collider>();
+        [SerializeField, ReorderableList] private List<Collider> ignoredColliders = new List<Collider>();
         [SerializeField] private OrientationMode orientationMode = OrientationMode.TowardsGravity;
         [SerializeField] private float orientationSharpness = 20f;
         
-        [HorizontalLine(color: EColor.Yellow)]
-        [Header("Mesh and costumes")]
+        [HorizontalLine(3, EColor.Yellow)]
+        [Header("Mesh and Costumes")]
         [SerializeField] private Transform meshRoot;
+        [SerializeField] private Mesh costumeMesh;
 
-        [HorizontalLine(color: EColor.White)]
+        [HorizontalLine(3, EColor.White)]
         [Header("Audio Clips")]
         [SerializeField] private AudioClip footstepSound;
         [SerializeField] private AudioClip jumpSound;
@@ -92,7 +94,9 @@ namespace Players {
 
         // private properties
         public ControlMode ControlMode { get; private set; }
-        
+
+        public float FlyStartingTime { get; private set; }
+
         private Ladder ActiveLadder { get; set; }
         
         private ClimbState ClimbState {
@@ -130,11 +134,9 @@ namespace Players {
         private Vector3 _wallJumpNormal;
         private bool _bounceOffGround = false;
         
-        // for free and swim mode
+        // for air and swim mode
         private bool _jumpInputIsHeld = false;
         private bool _crouchInputIsHeld = false;
-        
-        // for swim mode
         private Collider _waterZone;
         
         // for climb mode
@@ -189,7 +191,7 @@ namespace Players {
                     _landSound = null;  // depend on ground tags
                     break;
 
-                case ControlMode.Free:
+                case ControlMode.Air:
                     motor.SetCapsuleCollisionsActivation(true);          // detect collisions or not?
                     motor.SetMovementCollisionsSolvingActivation(true);  // solve collision or not?
                     motor.SetGroundSolvingActivation(false);
@@ -197,6 +199,7 @@ namespace Players {
                     _dashSound = flySound;
                     _jumpSound = flySound;
                     _landSound = null;  // depend on ground tags
+                    FlyStartingTime = Time.time;
                     break;
                 
                 case ControlMode.Swim:
@@ -226,8 +229,9 @@ namespace Players {
                 case ControlMode.Default:
                     break;
                 
-                case ControlMode.Free:
+                case ControlMode.Air:
                     motor.SetGroundSolvingActivation(true);
+                    FlyStartingTime = 0;
                     break;
                 
                 case ControlMode.Swim:
@@ -249,9 +253,9 @@ namespace Players {
         }
 
         public void ProcessInput(ref PlayerCharacterInputs inputs) {
-            // check free toggle input and apply mode transitions
-            if (inputs.FreeModeToggled && !_waterZone) {
-                TransitionToMode(ControlMode == ControlMode.Free ? ControlMode.Default : ControlMode.Free);
+            // check air toggle input and apply mode transitions
+            if (inputs.AirModeToggled && !_waterZone) {
+                TransitionToMode(ControlMode == ControlMode.Air ? ControlMode.Default : ControlMode.Air);
             }
 
             // check climb toggle input and apply mode transitions
@@ -274,8 +278,8 @@ namespace Players {
                     }
                     
                     if (ladder) {
-                        // player can only climb ladders in default or free mode
-                        if (ControlMode == ControlMode.Default || ControlMode == ControlMode.Free) {
+                        // player can only climb ladders in default or air mode
+                        if (ControlMode == ControlMode.Default || ControlMode == ControlMode.Air) {
                             // if player is close enough to the top release point, transition to climb mode directly
                             if (motor.TransientPosition.y - ladder.TopReleasePoint.position.y >= -0.1f) {
                                 ActiveLadder = ladder;
@@ -284,7 +288,7 @@ namespace Players {
                             // otherwise, player can only climb onto the ladder from the front side, not the back side
                             else {
                                 var directionFromLadder = motor.TransientPosition - ladder.transform.position;
-                                if (Vector3.Dot(directionFromLadder, ladder.transform.forward) < -0.05f) {
+                                if (Vector3.Dot(directionFromLadder.normalized, ladder.transform.forward) < 0.01f) {
                                     ActiveLadder = ladder;
                                     TransitionToMode(ControlMode.Climb);
                                 }
@@ -348,7 +352,7 @@ namespace Players {
 
                     break;
 
-                case ControlMode.Free:
+                case ControlMode.Air:
                     _moveInputVector = playerCamera.transform.rotation * moveVector;
                     
                     // C# 8.0 feature not yet supported by Unity
@@ -436,7 +440,7 @@ namespace Players {
                     break;
                 case ControlMode.Auto:
                     break;
-                case ControlMode.Free:
+                case ControlMode.Air:
                     break;
                 case ControlMode.Swim:
                     break;
@@ -450,7 +454,7 @@ namespace Players {
         public void UpdateRotation(ref Quaternion currentRotation, float deltaTime) {
             switch (ControlMode) {
                 case ControlMode.Default:
-                case ControlMode.Free:
+                case ControlMode.Air:
                 case ControlMode.Swim:
                     // normally, if gravity is straight down, rotation is only controlled by the look direction
                     if (_lookInputVector.sqrMagnitude > 0f && rotationSharpness > 0f) {
@@ -600,8 +604,7 @@ namespace Players {
                             // this is required whenever we want our character to leave the ground
                             motor.ForceUnground();
 
-                            currentVelocity += jumpDirection * jumpUpSpeed -
-                                               Vector3.Project(currentVelocity, motor.CharacterUp);
+                            currentVelocity += jumpDirection * jumpUpSpeed - Vector3.Project(currentVelocity, motor.CharacterUp);
                             currentVelocity += _moveInputVector * jumpScalableForwardSpeed;
 
                             // reset jump state
@@ -622,10 +625,15 @@ namespace Players {
                     break;
                 }
 
-                case ControlMode.Free: {
+                case ControlMode.Air: {
                     var verticalInput = 0f + (_jumpInputIsHeld ? 1f : 0f) + (_crouchInputIsHeld ? -1f : 0f);
-                    var targetVelocity = (_moveInputVector + motor.CharacterUp * verticalInput).normalized * freeMoveSpeed;
-                    currentVelocity = Vector3.Lerp(currentVelocity, targetVelocity, EaseFactor(freeSharpness, deltaTime));
+                    var targetVelocity = (_moveInputVector + motor.CharacterUp * verticalInput).normalized * airMoveSpeed;
+                    currentVelocity = Vector3.Lerp(currentVelocity, targetVelocity, EaseFactor(airSharpness, deltaTime));
+
+                    if (motor.TransientPosition.y >= maxAltitude && currentVelocity.y > 0) {
+                        currentVelocity = new Vector3(currentVelocity.x, 0, currentVelocity.z);
+                        Debug.Log("SYSTEM WARNING: ALTITUDE LIMIT");
+                    }
                     break;
                 }
 

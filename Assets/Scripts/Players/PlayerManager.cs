@@ -21,7 +21,7 @@ namespace Players {
                 CrouchDown = Input.GetKeyDown(KeyCode.LeftControl),
                 CrouchUp = Input.GetKeyUp(KeyCode.LeftControl),
                 CrouchHeld = Input.GetKey(KeyCode.LeftControl),
-                FreeModeToggled = Input.GetKeyUp(KeyCode.X),
+                AirModeToggled = Input.GetKeyUp(KeyCode.X),
                 ClimbModeToggled = Input.GetKeyUp(KeyCode.E)
             };
 

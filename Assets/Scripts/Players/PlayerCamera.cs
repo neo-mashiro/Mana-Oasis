@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Random = UnityEngine.Random;
 using static Utilities.MathUtils;
 using NaughtyAttributes;
 
@@ -11,11 +12,11 @@ namespace Players {
         
         [SerializeField] private PlayerController playerController;
         
-        [HorizontalLine(color: EColor.Red)]
-        [Header("Follow Target")]
+        [HorizontalLine(3, EColor.Red)]
+        [Header("Target")]
         [SerializeField] private Transform followTarget;
 
-        [HorizontalLine(color: EColor.Pink)]
+        [HorizontalLine(3, EColor.Pink)]
         [Header("Distance")]
         [SerializeField] private float defaultFollowDistance = 6f;
         [SerializeField] private float minFollowDistance = 3f;
@@ -24,7 +25,7 @@ namespace Players {
         [SerializeField] private float zoomSharpness = 10f;
         [SerializeField] private float followSharpness = 10000f;
 
-        [HorizontalLine(color: EColor.Violet)]
+        [HorizontalLine(3, EColor.Violet)]
         [Header("Rotation")]
         [SerializeField] private bool invertX = false;
         [SerializeField] private bool invertY = false;
@@ -34,12 +35,23 @@ namespace Players {
         [SerializeField] private float rotationSpeed = 1f;
         [SerializeField] private float rotationSharpness = 10000f;
 
-        [HorizontalLine(color: EColor.Green)]
+        [HorizontalLine(3, EColor.Green)]
         [Header("Obstruction")]
         [SerializeField] private float obstructionCheckRadius = 0.1f;
         [SerializeField] private float obstructionSharpness = 1000f;
         [SerializeField] private LayerMask obstructionMask = -1;
-        [SerializeField] private List<Collider> ignoredColliders = new List<Collider>();
+        [SerializeField, ReorderableList] private List<Collider> ignoredColliders = new List<Collider>();
+        
+        [HorizontalLine(3, EColor.Orange)]
+        [Header("Camera Shake")]
+        [SerializeField] private Vector3 maxPositionShake = new Vector3(0.25f, 0.5f, 0f);
+        [SerializeField] private Vector3 maxRotationShake = new Vector3(2, 0, 2);
+        [SerializeField] private float frequency = 0.5f;
+        [SerializeField] private float recoverySharpness = 2;
+        [Tooltip("Camera will start to shake above this height."), Range(0, 50)]
+        [SerializeField] private float minShakeAltitude = 32;
+        [Tooltip("Camera will reach maximum shake at this height."), Range(128, 300)]
+        [SerializeField] private float maxShakeAltitude = 160;
         
         public Perspective CameraPerspective { get; private set; }
         private Vector3 TargetForward { get; set; }
@@ -51,10 +63,20 @@ namespace Players {
         private float _verticalAngle;
         private bool _perspectiveEnforced;
 
+        private Vector3 _targetPosition;
+        private Quaternion _targetRotation;
+
         private bool _isObstructed;
         private int _obstructionCount;
-        private RaycastHit[] _obstructions = new RaycastHit[8];  // increase to 16, 32 if you may have more obstructions
+        private RaycastHit[] _obstructions = new RaycastHit[8];
         
+        private float _seed;
+        private float _deltaAltitude;
+        private float _windPulse;
+        private float _actualPulse;
+        private Vector3 _positionNoise = Vector3.zero;
+        private Vector3 _rotationNoise = Vector3.zero;
+
 
         private void OnValidate() {
             defaultFollowDistance = Mathf.Clamp(defaultFollowDistance, minFollowDistance, maxFollowDistance);
@@ -68,11 +90,40 @@ namespace Players {
             
             _actualDistance = _followDistance = defaultFollowDistance;
             _verticalAngle = defaultVerticalAngle;
+
+            _seed = Random.value;
+            _deltaAltitude = maxShakeAltitude - minShakeAltitude;
             
             AddIgnoredColliders(playerController.GetComponentsInChildren<Collider>());
         }
 
         public void ProcessInput(ref PlayerCameraInputs inputs, float deltaTime) {
+            /// --------------------------------------------------------------------------------------------------------
+            /// 1. update camera's perspective
+            /// --------------------------------------------------------------------------------------------------------
+            // disable perspective switches in auto and climb mode
+            if (playerController.ControlMode == ControlMode.Auto || playerController.ControlMode == ControlMode.Climb) {
+                // enforce third-person perspective when player is in auto or climb mode
+                if (CameraPerspective == Perspective.FirstPerson) {
+                    SwitchToView(Perspective.ThirdPerson);
+                    _perspectiveEnforced = true;
+                }
+            }
+            else {
+                // switch back to first-person perspective if third-person is previously enforced
+                if (_perspectiveEnforced) {
+                    SwitchToView(Perspective.FirstPerson);
+                    _perspectiveEnforced = false;
+                }
+                // switch between third-person and first-person perspective on mouse click
+                if (inputs.SwitchView) {
+                    SwitchToView(CameraPerspective == Perspective.ThirdPerson ? Perspective.FirstPerson : Perspective.ThirdPerson);
+                }
+            }
+            
+            /// --------------------------------------------------------------------------------------------------------
+            /// 2. update camera's rotation
+            /// --------------------------------------------------------------------------------------------------------
             var rotationInput = new Vector3(inputs.MovementX, inputs.MovementY, 0f);
             
             if (invertX) {
@@ -97,7 +148,7 @@ namespace Players {
             _verticalAngle -= rotationInput.y * rotationSpeed;
             if (CameraPerspective == Perspective.ThirdPerson) {
                 _verticalAngle = Mathf.Clamp(_verticalAngle, minVerticalAngle, maxVerticalAngle);
-                if (playerController.ControlMode == ControlMode.Free || playerController.ControlMode == ControlMode.Swim) {
+                if (playerController.ControlMode == ControlMode.Air || playerController.ControlMode == ControlMode.Swim) {
                     _verticalAngle = Mathf.Clamp(_verticalAngle, -45f, 45f);
                 }
             }
@@ -108,35 +159,18 @@ namespace Players {
             var verticalRotation = Quaternion.Euler(_verticalAngle, 0, 0);
             
             // combine planar and vertical rotations and apply
-            var targetRotation = planarRotation * verticalRotation;
-            targetRotation = Quaternion.Slerp(transform.rotation, targetRotation, EaseFactor(rotationSharpness, deltaTime));
-            transform.rotation = targetRotation;
-            
-            // disable perspective switches in auto and climb mode
-            if (playerController.ControlMode == ControlMode.Auto || playerController.ControlMode == ControlMode.Climb) {
-                // enforce third-person perspective when player is in auto or climb mode
-                if (CameraPerspective == Perspective.FirstPerson) {
-                    SwitchToView(Perspective.ThirdPerson);
-                    _perspectiveEnforced = true;
-                }
-            }
-            else {
-                // switch back to first-person perspective if third-person is previously enforced
-                if (_perspectiveEnforced) {
-                    SwitchToView(Perspective.FirstPerson);
-                    _perspectiveEnforced = false;
-                }
-                // switch between third-person and first-person perspective on mouse click
-                if (inputs.SwitchView) {
-                    SwitchToView(CameraPerspective == Perspective.ThirdPerson ? Perspective.FirstPerson : Perspective.ThirdPerson);
-                }
-            }
+            _targetRotation = planarRotation * verticalRotation;
+            _targetRotation = Quaternion.Slerp(transform.rotation, _targetRotation, EaseFactor(rotationSharpness, deltaTime));
+            transform.rotation = _targetRotation;
 
+            /// --------------------------------------------------------------------------------------------------------
+            /// 3. update camera's position (depends on the correct rotation)
+            /// --------------------------------------------------------------------------------------------------------
             if (CameraPerspective == Perspective.FirstPerson) {
                 _followPosition = Vector3.Lerp(_followPosition, followTarget.position, EaseFactor(followSharpness, deltaTime));
                 _actualDistance = Mathf.Lerp(_actualDistance, _followDistance, EaseFactor(zoomSharpness, deltaTime));
                 
-                transform.position = _followPosition - targetRotation * Vector3.forward * _actualDistance;
+                transform.position = _followPosition - _targetRotation * Vector3.forward * _actualDistance;
             }
             
             else {
@@ -176,14 +210,48 @@ namespace Players {
                 }
 
                 // find the smoothed camera position and apply
-                var targetPosition = _followPosition - targetRotation * Vector3.forward * _actualDistance;
-                transform.position = targetPosition;
+                _targetPosition = _followPosition - _targetRotation * Vector3.forward * _actualDistance;
+                transform.position = _targetPosition;
+            }
+            
+            /// --------------------------------------------------------------------------------------------------------
+            /// 4. add camera shake for third-person perspective in air mode (simple Perlin noise)
+            /// --------------------------------------------------------------------------------------------------------
+            if (CameraPerspective == Perspective.ThirdPerson && playerController.ControlMode == ControlMode.Air) {
+                // the degree of camera shake depends on wind pulse magnitude, which is a function of flying height
+                _windPulse = Mathf.Clamp01((_targetPosition.y - minShakeAltitude) / _deltaAltitude);
+                
+                if (_windPulse == 0) {
+                    return;
+                }
+                
+                // instead of shaking suddenly, apply wind pulse gradually within 5 seconds since taking off
+                // this is to avoid jittery camera movements when player transitions to air mode at high altitude
+                var flyingTime = Time.time - playerController.FlyStartingTime;
+                _actualPulse = Mathf.Clamp(flyingTime, 0, 5) * 0.2f * _windPulse;
+                
+                _positionNoise = new Vector3(PerlinNoise1D(0), PerlinNoise1D(1), PerlinNoise1D(2));
+                _rotationNoise = new Vector3(PerlinNoise1D(3), PerlinNoise1D(4), PerlinNoise1D(5));
+                
+                transform.position += _targetRotation * Vector3.Scale(maxPositionShake, _positionNoise) * _actualPulse;
+                transform.rotation *= Quaternion.Euler(Vector3.Scale(maxRotationShake, _rotationNoise) * _actualPulse);
+            }
+            else if (_actualPulse > 0.005f) {
+                // smoothly recover the camera from noticeable shaking
+                _actualPulse = Mathf.Lerp(_actualPulse, 0, EaseFactor(recoverySharpness, deltaTime));
+                
+                transform.position += _targetRotation * Vector3.Scale(maxPositionShake, _positionNoise) * _actualPulse;
+                transform.rotation *= Quaternion.Euler(Vector3.Scale(maxRotationShake, _rotationNoise) * _actualPulse);
             }
         }
 
         public void AddIgnoredColliders(IEnumerable<Collider> colliders) {
             ignoredColliders.Clear();
             ignoredColliders.AddRange(colliders);
+        }
+        
+        private float PerlinNoise1D(int axis) {
+            return Mathf.PerlinNoise(_seed + axis, Time.time * frequency) * 2 - 1;
         }
 
         private void SwitchToView(Perspective toPerspective) {

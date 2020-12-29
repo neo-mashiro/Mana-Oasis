@@ -3,29 +3,13 @@ using UnityEngine;
 
 namespace Players {
     
-    public enum Perspective {
-        FirstPerson,
-        ThirdPerson
-    }
+    public enum Perspective { FirstPerson, ThirdPerson }
 
-    public enum ControlMode {
-        Default,
-        Auto,  // reserve for future use
-        Free,
-        Swim,
-        Climb
-    }
+    public enum ControlMode { Default, Auto, Air, Swim, Climb }
 
-    public enum ClimbState {
-        Anchor,
-        Climb,
-        DeAnchor
-    }
+    public enum ClimbState { Anchor, Climb, DeAnchor }
 
-    public enum OrientationMode {
-        TowardsGravity,
-        TowardsGravityAndSlope
-    }
+    public enum OrientationMode { TowardsGravity, TowardsGravityAndSlope }
     
     public struct PlayerCameraInputs {
         public float MovementX;
@@ -42,7 +26,7 @@ namespace Players {
         public bool CrouchDown;
         public bool CrouchUp;
         public bool CrouchHeld;
-        public bool FreeModeToggled;
+        public bool AirModeToggled;
         public bool ClimbModeToggled;
     }
 
