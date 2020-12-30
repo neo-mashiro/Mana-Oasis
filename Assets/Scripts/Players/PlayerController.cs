@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using static Utilities.MathUtils;
 using KinematicCharacterController;
+using Managers;
 using NaughtyAttributes;
 
 namespace Players {
@@ -52,7 +53,7 @@ namespace Players {
         [SerializeField] private float swimmingSpeed = 4f;
         [SerializeField] private float swimmingMovementSharpness = 3;
         [SerializeField] private float swimmingOrientationSharpness = 2f;
-        [SerializeField] private float gravityUnderWater = -0.1f;
+        [SerializeField] private float gravityUnderWater = -0.02f;
         
         [HorizontalLine(3, EColor.Pink)]
         [Header("Climb Mode")]
@@ -433,6 +434,13 @@ namespace Players {
                         _waterZone = _probedColliders[0];
                     }
                 }
+                // transition back to default mode when the reference point moves high enough above the water surface
+                else if (swimmingReferencePoint.position.y - hitPoint.y > 0.1f) {
+                    if (ControlMode == ControlMode.Swim) {
+                        TransitionToMode(ControlMode.Default);
+                        _waterZone = null;
+                    }
+                }
             }
             
             switch (ControlMode) {
@@ -632,35 +640,36 @@ namespace Players {
 
                     if (motor.TransientPosition.y >= maxAltitude && currentVelocity.y > 0) {
                         currentVelocity = new Vector3(currentVelocity.x, 0, currentVelocity.z);
-                        Debug.Log("SYSTEM WARNING: ALTITUDE LIMIT");
+                        GameManager.Instance.DisplaySystemMessage(Color.red, "ALTITUDE LIMIT", 2);
                     }
                     break;
                 }
 
                 case ControlMode.Swim: {
-                    var verticalInput = gravityUnderWater + (_jumpInputIsHeld ? 1f : 0f) + (_crouchInputIsHeld ? -1f : 0f);
+                    // Debug.Log("in swim mode");
+                    var verticalInput = 0 + (_jumpInputIsHeld ? 1f : 0f) + (_crouchInputIsHeld ? -1f : 0f);
                     var targetVelocity = (_moveInputVector + motor.CharacterUp * verticalInput).normalized * swimmingSpeed;
                     var smoothedVelocity = Vector3.Lerp(currentVelocity, targetVelocity, EaseFactor(swimmingMovementSharpness, deltaTime));
 
                     // see if our swimming reference point would be out of water after the update
-                    var resultingReferencePointPosition = swimmingReferencePoint.position + smoothedVelocity * deltaTime;
-                    var waterTransform = _waterZone.transform;
-                    var closestPointOnWater = Physics.ClosestPoint(resultingReferencePointPosition, _waterZone,
-                        waterTransform.position, waterTransform.rotation);
+                    var newReferencePointPosition = swimmingReferencePoint.position + smoothedVelocity * deltaTime;
+                    var closestPointOnWater = Physics.ClosestPoint(newReferencePointPosition, _waterZone,
+                        _waterZone.transform.position, _waterZone.transform.rotation);
 
-                    if (closestPointOnWater != resultingReferencePointPosition) {
+                    if ((closestPointOnWater - newReferencePointPosition).sqrMagnitude > 1e-2) {
+                        // Debug.Log("in if statement");
                         // if so, project the velocity onto the water surface so that we won't fly off when being close to the surface
                         // we can set the reference point to be near the neck/shoulder, thus the player can stick her head out of water
-                        var waterSurfaceNormal = (resultingReferencePointPosition - closestPointOnWater).normalized;
+                        var waterSurfaceNormal = (newReferencePointPosition - closestPointOnWater).normalized;
                         smoothedVelocity = Vector3.ProjectOnPlane(smoothedVelocity, waterSurfaceNormal);
 
-                        // but we can jump out of water ???
-                        if (_jumpRequested) {
-                            smoothedVelocity += motor.CharacterUp * jumpUpSpeed - Vector3.Project(currentVelocity, motor.CharacterUp);
-                        }
+                        // how to jump out of water?
+                        // if (_jumpRequested) {
+                        //     smoothedVelocity += motor.CharacterUp * jumpUpSpeed - Vector3.Project(currentVelocity, motor.CharacterUp);
+                        // }
                     }
-
-                    currentVelocity = smoothedVelocity;
+                    
+                    currentVelocity = new Vector3(smoothedVelocity.x, smoothedVelocity.y + gravityUnderWater, smoothedVelocity.z);
                     break;
                 }
                 
