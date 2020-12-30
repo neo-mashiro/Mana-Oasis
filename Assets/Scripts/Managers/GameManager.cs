@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,19 +15,29 @@ namespace Managers {
         
         [SerializeField] private GameObject loadingScreenPanel;
         [SerializeField] private float loadingScreenFadingSpeed = 2f;
+        
+        [SerializeField] private GameObject systemMessagePanel;
 
         private Image _loadingScreenImage;
         private Slider _loadingBar;
         private TextMeshProUGUI _loadingBarText;
         private CanvasGroup _loadingScreenCanvasGroup;
 
+        private TextMeshProUGUI _systemMessage;
+        private readonly StringBuilder _messageContent = new StringBuilder(32);
+        private Coroutine _cleanupCoroutine;
+
         protected override void OnAwake() {
+            // initialize loading screen panel
             _loadingScreenImage = loadingScreenPanel.GetComponent<Image>();
             _loadingBar = loadingScreenPanel.GetComponentInChildren<Slider>();
             _loadingBarText = loadingScreenPanel.GetComponentInChildren<TextMeshProUGUI>();
             _loadingScreenCanvasGroup = loadingScreenPanel.GetComponent<CanvasGroup>();
-            
             loadingScreenPanel.SetActive(false);
+
+            // initialize system message panel
+            _systemMessage = systemMessagePanel.GetComponentInChildren<TextMeshProUGUI>();
+            systemMessagePanel.SetActive(false);
         }
 
         /// <summary>
@@ -107,6 +118,31 @@ namespace Managers {
             }
 
             loadingScreenPanel.SetActive(false);
+        }
+
+        /// <summary>
+        /// Activates the system message UI panel and displays a message. The panel will clean up and hide itself
+        /// after the message stays on screen for a few seconds. 
+        /// </summary>
+        public void DisplaySystemMessage(Color color, string message, float seconds) {
+            if (_messageContent.Length > 0) {
+                _messageContent.Clear();
+                StopCoroutine(_cleanupCoroutine);
+            }
+            
+            _messageContent.Append(message);
+            _systemMessage.SetText(_messageContent);
+            _systemMessage.color = color;
+            
+            systemMessagePanel.SetActive(true);
+            _cleanupCoroutine = StartCoroutine(HideSystemMessagePanel(seconds));
+        }
+
+        private IEnumerator HideSystemMessagePanel(float seconds) {
+            yield return new WaitForSeconds(seconds);
+            _messageContent.Clear();
+            _systemMessage.SetText(_messageContent);
+            systemMessagePanel.SetActive(false);
         }
     }
 }
