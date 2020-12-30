@@ -1,34 +1,29 @@
 1月份开始，开学左右，就开始在glassdoor上投简历，找ubisoft和unity这种实习的机会。
 记得发邮件给ayoub让他介绍下有什么好的montreal的unity的岗位，他人脉广。ayoub还是非常赞的。。。。。
 不要去考Unity的资格证书，不值得的，专心加速把自己的游戏做出来。
-
-飞行状态下相机的白边（黑边问题），去参考Brackeys的那个初期视频，里面有讲原因，等换成root motion了再边测边调。一个最简单的方法是，当FPS第一视角的时候，让相机把character的头部occlude mask掉，就好了，只要保证镜子里反射的内容能照出来就行。我已经搞定了，把followSharpness调高就行了。
-飞行高于10米，加Perlin噪音和风声。
-test
-从free状态飞到水里。
+最后找工作展示portfolio的时候，可能没法做WebGL的build，那就录一堆短视频，把mana项目网站搭起来，publish到网页上。网页上是可以嵌入小视频的，画质非常高，不像GIF一样受到网站帧数的限制什么的，可以参考下这个例子：https://roystan.net/articles/camera-shake.html
+------------------------------------------------------------------------------------------
 addvelocity模拟爆炸的外界力。
-
-
-用圆柱体把游泳爬梯子这些功能都测通
-crouch的时候，相机的followPoint也要跟着下降才行
-water用trigger collider没问题，但是ladder呢，用trigger的话就可以直接穿过去了
-需要补一段从swim回到default的逻辑。。。
-
-看lovelive sunshine
 
 把root motion用Shirley做进去，先不用管头部转动的动画（FPS下应该头部随着相机转动的，水平和垂直都可以）
 试试看animation rigging
 https://www.youtube.com/watch?v=Htl7ysv10Qs
 anchor和deAnchor后面加上动画。
-
-refactor玩家和相机的控制脚本
-refactor planet和teleporter的脚本
+crouch的时候，相机的followPoint也要跟着下降才行
 
 处理physicsMover的问题，当站在旋转的平台上时，人物要随着平台一起旋转和移动，TPS时camera不动（上帝视角），FPS时camera也要跟着动，完成后测一下和普通的kinematic的刚体的交互，再测一下和physics刚体的交互（在motor上找到rigidbody interaction type的设置）。这部分目前可能解决不了，KCC只支持站在physicsMover上的互动，对于一般的没加PhysicsMover的刚体比如我的car，搞不定，等DOTS CC发布再说吧，先就单独用carController。
 干脆就这样，玩家上车后，禁用KCC，切换成carController就行了，然后把玩家做成car的child，下车了再切回KCC。
 
 测一下改好的脚本能否控制AI
 交互没问题了，把carController素材导进来，配合车辆的素材，hook一下驾驶的FPS和TPS（KCC很难处理非physicMover的dynamic刚体，可能要等DOTS CC发布了才行）
+------------------------------------------------------------------------------------------
+
+
+
+看lovelive sunshine
+
+refactor玩家和相机的控制脚本
+refactor planet和teleporter的脚本
 
 利用cinemachine和timeline制作并测试一下玩家的cutscene，利用default到Charging state的转换。
 

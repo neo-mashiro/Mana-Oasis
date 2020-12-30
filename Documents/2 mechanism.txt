@@ -40,14 +40,20 @@ TO-DO-LIST：Cinemachine用的好的话，和Timeline两者完美结合，是可
 
 把游戏的各个不同的模块，用UML整理出来，有一个清晰的大局观。
 
+飞行状态时，做个meter的radial表盘F3显示高度和速度，没找到素材，等学了Photoshop再看，表针划过的区域用shader做成半透明的彩色状态。
+
 最后build的时候，在Unity中做好片头splash动画和logo，在project settings/player中设置default icon以及default cursor，用作游戏内的图标和鼠标图案。
-build之前，把scripting backend从mono换成IL2CPP，确保C++ compiler设置为release，并启用Use incremental GC。平时开发的时候，不要启用Use incremental GC，虽然它能让GC分摊到很多frames里，从而避免profiler出现比较大的GC spike，但在开发过程中，这并不利于我们optimize做调优，反而会很容易忽略掉一些GC spike，所以一定要当所有调优都完成后，最后build的时候再选这个选项。
+build之前，把scripting backend从mono换成IL2CPP，确保C++ compiler设置为release，并启用Use incremental GC。平时开发的时候，不要启用Use incremental GC，虽然它能让GC分摊到很多frames里，从而避免profiler出现比较大的GC spike，但在开发过程中，这并不利于我们optimize做调优，反而会很容易忽略掉一些GC spike，所以一定要当所有调优都完成后，最后build的时候再选这个选项。build的时候，注意把project settings的quality设置好，目前开发为了流畅，我把默认的quality调成了low，build的时候要改成ultra，并且提高各种画质的选项。
 
 用Cinemachine Confiner extension来控制TPS相机的边界，到了边界玩家还可以往前走但相机就不能了，所以玩家的背影越来越远，达到一定距离以后就可以切换场景了，用这个做场景切换的效果。所以也就是说，这个相机的confiner是个矩形，矩形的长宽要比scene的大小稍微小一圈，相差的那一圈也就是相机会看着玩家渐行渐远的那段距离。
 
 游戏中设计几个观察者视角的场景活动，比如斗兽场里看女巫们对打，赌谁赢的画面，涉及到多个物体同时移动。然后用Cinemachine Target Group来实现同时让相机look at所有的女巫，随着战斗进行，女巫数量逐渐减少，相机就会自动zoom in。这是唯一可以实现look at多个物体保证在屏幕内的。
 
 场景切换时要换BGM，利用音量逐渐减小fade的切换方式，用Timeline来实现。也可以用coroutine。
+
+代码调优，enhance performance，读一下：
+https://learn.unity.com/tutorial/fixing-performance-problems#
+对于Performance-critical代码的调优，或者是速度非常慢的代码（比如语音，图像类操作），可以考虑写unsafe关键字的函数，用C#的指针来手动操作，配合fixed和stackalloc关键字，就和写C++一样，但是会涉及到类似C语言很底层的东西，通常不需要。当你用了unsafe关键字和指针，C#自带的GC就不会对这块代码起作用，因为GC本质上也是依靠智能指针来跟踪内存的，GC没法知道你有哪些指针，指向什么地址。
 
 跑车移动的时候，后面加上trajectory render和nitro能量特效。
 
