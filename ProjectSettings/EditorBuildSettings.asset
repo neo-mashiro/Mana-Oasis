@@ -6,7 +6,7 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/x.Restopia/CharacterAndCinemachine.unity
+    path: Assets/Sandbox/KCC Box.unity
     guid: 05a54bb9c9986f0488c27580751c3278
   - enabled: 1
     path: Assets/x.Restopia/Restopia.unity

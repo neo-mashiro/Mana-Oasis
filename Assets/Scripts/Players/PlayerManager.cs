@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using NaughtyAttributes;
+using UnityEngine;
 
 namespace Players {
 
@@ -22,7 +23,8 @@ namespace Players {
                 CrouchUp = Input.GetKeyUp(KeyCode.LeftControl),
                 CrouchHeld = Input.GetKey(KeyCode.LeftControl),
                 AirModeToggled = Input.GetKeyUp(KeyCode.X),
-                ClimbModeToggled = Input.GetKeyUp(KeyCode.E)
+                ClimbModeToggled = Input.GetKeyUp(KeyCode.E),
+                ShiftHeld = Input.GetKey(KeyCode.LeftShift)
             };
 
             playerController.ProcessInput(ref characterInputs);
@@ -39,5 +41,10 @@ namespace Players {
             playerCamera.ProcessInput(ref playerCameraInputs, Time.deltaTime);
         }
 
+        [Button("Simulate External Force")]
+        public void SimulateExternalForce() {
+            playerController.Motor.ForceUnground();
+            playerController.AddExtraVelocity(-playerController.Motor.CharacterForward * 20f);
+        }
     }
 }

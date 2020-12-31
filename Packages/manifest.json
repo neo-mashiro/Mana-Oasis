@@ -1,10 +1,13 @@
 {
   "dependencies": {
     "com.unity.addressables": "1.16.15",
+    "com.unity.burst": "1.4.3",
     "com.unity.cinemachine": "2.6.3",
     "com.unity.collab-proxy": "1.2.16",
     "com.unity.ide.rider": "3.0.2",
     "com.unity.inputsystem": "1.0.1",
+    "com.unity.jobs": "0.2.10-preview.13",
+    "com.unity.mathematics": "1.2.1",
     "com.unity.probuilder": "4.4.0",
     "com.unity.render-pipelines.universal": "7.3.1",
     "com.unity.test-framework": "1.1.18",

@@ -15,9 +15,10 @@ namespace Players {
 
         [HorizontalLine(3, EColor.Red)]
         [Header("Ground Movement")]
-        [SerializeField] private float maxStableMoveSpeed = 10f;
-        [SerializeField] private float stableMovementSharpness = 15f;
+        [SerializeField] private float maxStableMoveSpeed = 5f;
+        [SerializeField] private float stableMovementSharpness = 10f;
         [SerializeField] private float rotationSharpness = 20f;
+        [SerializeField] private float boostMoveSpeed = 15f;
         [SerializeField] private Vector3 gravity = new Vector3(0, -30f, 0);
 
         [HorizontalLine(3, EColor.Blue)]
@@ -38,12 +39,13 @@ namespace Players {
         
         [HorizontalLine(3, EColor.Green)]
         [Header("Auto Mode")]
-        [SerializeField] private float autoSpeed = 15f;
+        [SerializeField] private float autoMoveSpeed = 15f;
         
         [HorizontalLine(3, EColor.Orange)]
         [Header("Air Mode")]
         [SerializeField] private float airMoveSpeed = 15f;
         [SerializeField] private float airSharpness = 15;
+        [SerializeField] private float boostAirMoveSpeed = 20f;
         [SerializeField] private float maxAltitude = 400;
         
         [HorizontalLine(3, EColor.Indigo)]
@@ -119,10 +121,10 @@ namespace Players {
         private Vector3 _lookInputVector;
         
         // obstructions
-        private Collider[] _probedColliders = new Collider[8];
-        private RaycastHit[] _probedHits = new RaycastHit[8];
+        private readonly Collider[] _probedColliders = new Collider[8];
+        private readonly RaycastHit[] _probedHits = new RaycastHit[8];
 
-        // jump and crouch
+        // for default mode
         private bool _jumpRequested = false;
         private bool _jumpConsumed = false;
         private bool _jumpedThisFrame = false;
@@ -134,6 +136,7 @@ namespace Players {
         private bool _canWallJump = false;
         private Vector3 _wallJumpNormal;
         private bool _bounceOffGround = false;
+        private bool _boostInputIsHeld = false;
         
         // for air and swim mode
         private bool _jumpInputIsHeld = false;
@@ -153,7 +156,7 @@ namespace Players {
 
         // velocity from extra force
         private Vector3 _extraVelocity = Vector3.zero;
-        
+
         // sound effects
         private AudioClip _walkSound;
         private AudioClip _dashSound;
@@ -271,6 +274,7 @@ namespace Players {
                     // it will be the last one we hit when doing a capsule overlap cast, so we loop in reverse order
                     for (var i = hits - 1; i >= 0; i--) {
                         if (!ReferenceEquals(_probedColliders[i], null)) {
+                            // ReSharper disable once Unity.PerformanceCriticalCodeInvocation
                             ladder = _probedColliders[i].gameObject.GetComponent<Ladder>();
                             if (ladder) {
                                 break;
@@ -351,6 +355,8 @@ namespace Players {
                         _shouldBeCrouching = false;
                     }
 
+                    _boostInputIsHeld = inputs.ShiftHeld;
+
                     break;
 
                 case ControlMode.Air:
@@ -373,6 +379,7 @@ namespace Players {
                     
                     _jumpInputIsHeld = inputs.JumpHeld;
                     _crouchInputIsHeld = inputs.CrouchHeld;
+                    _boostInputIsHeld = inputs.ShiftHeld;
                     break;
 
                 case ControlMode.Swim:
@@ -537,7 +544,8 @@ namespace Players {
 
                         var inputRight = Vector3.Cross(_moveInputVector, motor.CharacterUp);
                         var reorientedInput = Vector3.Cross(effectiveGroundNormal, inputRight).normalized * _moveInputVector.magnitude;
-                        var targetVelocity = reorientedInput * maxStableMoveSpeed;
+                        var targetVelocity = reorientedInput * (_boostInputIsHeld ? boostMoveSpeed : maxStableMoveSpeed);
+                        
 
                         currentVelocity = Vector3.Lerp(currentVelocity, targetVelocity, EaseFactor(stableMovementSharpness, deltaTime));
                     }
@@ -635,18 +643,24 @@ namespace Players {
 
                 case ControlMode.Air: {
                     var verticalInput = 0f + (_jumpInputIsHeld ? 1f : 0f) + (_crouchInputIsHeld ? -1f : 0f);
-                    var targetVelocity = (_moveInputVector + motor.CharacterUp * verticalInput).normalized * airMoveSpeed;
+                    var moveSpeed = _boostInputIsHeld ? boostAirMoveSpeed : airMoveSpeed;
+                    var targetVelocity = (_moveInputVector + motor.CharacterUp * verticalInput).normalized * moveSpeed;
                     currentVelocity = Vector3.Lerp(currentVelocity, targetVelocity, EaseFactor(airSharpness, deltaTime));
+                    
+                    if (_extraVelocity.sqrMagnitude > 0f) {
+                        currentVelocity += new Vector3(_extraVelocity.x, Mathf.Min(_extraVelocity.y, 0), _extraVelocity.z);
+                        _extraVelocity = Vector3.zero;
+                    }
 
                     if (motor.TransientPosition.y >= maxAltitude && currentVelocity.y > 0) {
                         currentVelocity = new Vector3(currentVelocity.x, 0, currentVelocity.z);
                         GameManager.Instance.DisplaySystemMessage(Color.red, "ALTITUDE LIMIT", 2);
                     }
+                    
                     break;
                 }
 
                 case ControlMode.Swim: {
-                    // Debug.Log("in swim mode");
                     var verticalInput = 0 + (_jumpInputIsHeld ? 1f : 0f) + (_crouchInputIsHeld ? -1f : 0f);
                     var targetVelocity = (_moveInputVector + motor.CharacterUp * verticalInput).normalized * swimmingSpeed;
                     var smoothedVelocity = Vector3.Lerp(currentVelocity, targetVelocity, EaseFactor(swimmingMovementSharpness, deltaTime));
@@ -657,19 +671,19 @@ namespace Players {
                         _waterZone.transform.position, _waterZone.transform.rotation);
 
                     if ((closestPointOnWater - newReferencePointPosition).sqrMagnitude > 1e-2) {
-                        // Debug.Log("in if statement");
                         // if so, project the velocity onto the water surface so that we won't fly off when being close to the surface
                         // we can set the reference point to be near the neck/shoulder, thus the player can stick her head out of water
                         var waterSurfaceNormal = (newReferencePointPosition - closestPointOnWater).normalized;
                         smoothedVelocity = Vector3.ProjectOnPlane(smoothedVelocity, waterSurfaceNormal);
-
-                        // how to jump out of water?
-                        // if (_jumpRequested) {
-                        //     smoothedVelocity += motor.CharacterUp * jumpUpSpeed - Vector3.Project(currentVelocity, motor.CharacterUp);
-                        // }
                     }
                     
                     currentVelocity = new Vector3(smoothedVelocity.x, smoothedVelocity.y + gravityUnderWater, smoothedVelocity.z);
+                    
+                    if (_extraVelocity.sqrMagnitude > 0f) {
+                        currentVelocity += new Vector3(_extraVelocity.x, Mathf.Min(_extraVelocity.y, 0), _extraVelocity.z);
+                        _extraVelocity = Vector3.zero;
+                    }
+                    
                     break;
                 }
                 
@@ -827,7 +841,7 @@ namespace Players {
                 case true when !motor.LastGroundingStatus.IsStableOnGround: {
                     _audioSource.PlayOneShot(_landSound);
                     if (_bounceOffGround) {
-                        Accelerate(motor.CharacterUp * (jumpUpSpeed * 0.3f));
+                        AddExtraVelocity(motor.CharacterUp * (jumpUpSpeed * 0.3f));
                         _bounceOffGround = false;
                     }
 
@@ -841,18 +855,11 @@ namespace Players {
         }
 
         /// <summary>
-        /// Adds extra velocity to the character, to simulate explosion forces, hit impacts, wind zones, other impulses, etc.
+        /// Adds extra velocity to the character to simulate explosion forces, hit impacts, wind zones, impulses, etc.
         /// </summary>
-        public void Accelerate(Vector3 velocity) {
-            // example:
-            //
-            // if (Input.GetKeyDown(KeyCode.P)) {
-            //     PlayerController.motor.ForceUnground(0.1f);
-            //     PlayerController.Accelerate(-PlayerController.motor.CharacterForward * 10f);
-            // }
-
+        public void AddExtraVelocity(Vector3 velocity) {
             if (ControlMode != ControlMode.Auto && ControlMode != ControlMode.Climb) {
-                _extraVelocity += velocity;
+                _extraVelocity = velocity;
             }
         }
 

@@ -28,6 +28,7 @@ namespace Players {
         public bool CrouchHeld;
         public bool AirModeToggled;
         public bool ClimbModeToggled;
+        public bool ShiftHeld;
     }
 
     public struct AICharacterInputs {

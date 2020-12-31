@@ -3,8 +3,6 @@
 不要去考Unity的资格证书，不值得的，专心加速把自己的游戏做出来。
 最后找工作展示portfolio的时候，可能没法做WebGL的build，那就录一堆短视频，把mana项目网站搭起来，publish到网页上。网页上是可以嵌入小视频的，画质非常高，不像GIF一样受到网站帧数的限制什么的，可以参考下这个例子：https://roystan.net/articles/camera-shake.html
 ------------------------------------------------------------------------------------------
-addvelocity模拟爆炸的外界力。
-
 把root motion用Shirley做进去，先不用管头部转动的动画（FPS下应该头部随着相机转动的，水平和垂直都可以）
 试试看animation rigging
 https://www.youtube.com/watch?v=Htl7ysv10Qs
