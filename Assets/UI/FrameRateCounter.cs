@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using TMPro;
-using Extensions;
+using Utilities;
 
 namespace UI {
     

@@ -31,11 +31,6 @@ namespace Players {
         public bool ShiftHeld;
     }
 
-    public struct AICharacterInputs {
-        public Vector3 MoveVector;
-        public Vector3 LookVector;
-    }
-
     // use ushort (0 to 65,535) as the enum underlying type, we can limit the number of buffs up to 15 (2^16 = 65,536)
     // this is a reasonable limit as more buffs would introduce overcomplexity and mess up gameplay
     [Flags]

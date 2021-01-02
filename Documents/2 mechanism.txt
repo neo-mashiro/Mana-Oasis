@@ -40,8 +40,6 @@ TO-DO-LIST：Cinemachine用的好的话，和Timeline两者完美结合，是可
 
 把游戏的各个不同的模块，用UML整理出来，有一个清晰的大局观。
 
-飞行状态时，做个meter的radial表盘F3显示高度和速度，没找到素材，等学了Photoshop再看，表针划过的区域用shader做成半透明的彩色状态。
-
 最后build的时候，在Unity中做好片头splash动画和logo，在project settings/player中设置default icon以及default cursor，用作游戏内的图标和鼠标图案。
 build之前，把scripting backend从mono换成IL2CPP，确保C++ compiler设置为release，并启用Use incremental GC。平时开发的时候，不要启用Use incremental GC，虽然它能让GC分摊到很多frames里，从而避免profiler出现比较大的GC spike，但在开发过程中，这并不利于我们optimize做调优，反而会很容易忽略掉一些GC spike，所以一定要当所有调优都完成后，最后build的时候再选这个选项。build的时候，注意把project settings的quality设置好，目前开发为了流畅，我把默认的quality调成了low，build的时候要改成ultra，并且提高各种画质的选项。
 

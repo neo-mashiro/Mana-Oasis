@@ -68,7 +68,7 @@ namespace Players {
 
         private bool _isObstructed;
         private int _obstructionCount;
-        private RaycastHit[] _obstructions = new RaycastHit[8];
+        private readonly RaycastHit[] _obstructions = new RaycastHit[8];
         
         private float _seed;
         private float _deltaAltitude;

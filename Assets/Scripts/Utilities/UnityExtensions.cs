@@ -1,9 +1,9 @@
 ﻿using System.Linq;
 using UnityEngine;
 
-namespace Extensions {
+namespace Utilities {
     
-    public static class TransformExtensions {
+    public static class UnityExtensions {
         /// <summary>
         /// Returns all immediate children, or an empty array of length 0 if not found.
         /// </summary>
@@ -18,5 +18,11 @@ namespace Extensions {
             return transform.Cast<Transform>().SelectMany(t => t.GetComponents<T>()).ToArray();
         }
         
+        /// <summary>
+        /// Returns true if the layer is in the layer mask.
+        /// </summary>
+        public static bool Contains(this LayerMask layerMask, int layer) {
+            return layerMask == (layerMask | (1 << layer));
+        }
     }
 }

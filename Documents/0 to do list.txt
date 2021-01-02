@@ -1,40 +1,37 @@
 1月份开始，开学左右，就开始在glassdoor上投简历，找ubisoft和unity这种实习的机会。
 记得发邮件给ayoub让他介绍下有什么好的montreal的unity的岗位，他人脉广。ayoub还是非常赞的。。。。。
 不要去考Unity的资格证书，不值得的，专心加速把自己的游戏做出来。
-最后找工作展示portfolio的时候，可能没法做WebGL的build，那就录一堆短视频，把mana项目网站搭起来，publish到网页上。网页上是可以嵌入小视频的，画质非常高，不像GIF一样受到网站帧数的限制什么的，可以参考下这个例子：https://roystan.net/articles/camera-shake.html
+最后找工作展示portfolio的时候，可能没法做WebGL的build，那就录一堆短视频，把mana项目网站搭起来，publish到网页上。网页上是可以嵌入小视频的，画质非常高，不像GIF一样受到网站帧数的限制什么的，可以参考下这个例子：https://roystan.net/articles/camera-shake.html。Google可以搜到很多专门host Unity项目的服务器，可以保存游戏数据，host网页什么的，很便宜一个月几刀，搜一下。
 ------------------------------------------------------------------------------------------
-把root motion用Shirley做进去，先不用管头部转动的动画（FPS下应该头部随着相机转动的，水平和垂直都可以）
-试试看animation rigging
-https://www.youtube.com/watch?v=Htl7ysv10Qs
-anchor和deAnchor后面加上动画。
-crouch的时候，相机的followPoint也要跟着下降才行
-
-处理physicsMover的问题，当站在旋转的平台上时，人物要随着平台一起旋转和移动，TPS时camera不动（上帝视角），FPS时camera也要跟着动，完成后测一下和普通的kinematic的刚体的交互，再测一下和physics刚体的交互（在motor上找到rigidbody interaction type的设置）。这部分目前可能解决不了，KCC只支持站在physicsMover上的互动，对于一般的没加PhysicsMover的刚体比如我的car，搞不定，等DOTS CC发布再说吧，先就单独用carController。
-干脆就这样，玩家上车后，禁用KCC，切换成carController就行了，然后把玩家做成car的child，下车了再切回KCC。
-
-测一下改好的脚本能否控制AI
-交互没问题了，把carController素材导进来，配合车辆的素材，hook一下驾驶的FPS和TPS（KCC很难处理非physicMover的dynamic刚体，可能要等DOTS CC发布了才行）
+REMEMBER：mana oasis终归只是一个个人爱好练习项目，是个人收藏项目而不是商业游戏，可以免费发布到steam但永远不可能是商业级的AAA。
 ------------------------------------------------------------------------------------------
+啃掉root motion部分的代码，把walk和run成功实现出来。
+用animation rigging，参考Brackeys视频加上headAim rig，使得FPS的头部随着相机转动，水平正负100度之内，垂直正负90度。TPS不转动。
 
+【增加feature】导入very animation包，做crouch，anchor和deAncho和爬楼梯，游泳，跳，飞行的动画，boost飞行加上trace effect。
+【增加feature】把新做的动画，和KCC的controller以及相机整合在一起。
+【修复bug】crouch的时候，相机的followPoint也要跟着下降才行
 
+【增加feature】当站在旋转的平台上时，人物要随着平台一起旋转和移动，FPS时camera带动人物旋转，TPS时camera不旋转只follow。利用新写的那个MovingPlatform的脚本。测试一下motor上的rigidbody interaction type的选项。
+【增加feature】导入car controller，实现人物开车的功能，camera要根据车子的晃动而shake。
+【增加feature】用KCC控制AI，参考example的AI脚本。
 
-看lovelive sunshine
+【待办事项】继续刷CatlikeCoding的教程。
 
-refactor玩家和相机的控制脚本
-refactor planet和teleporter的脚本
+【fix】planet目前的逻辑是通过teleporter的进入而改变gravity的，把这个扩展一下，当玩家靠近星球一定距离的时候，OnTriggerEnter就改变gravity。
+【增加feature】搭第一版简易地图，导入HDRP包和相关素材，搭建旋转的planet(用planet脚本)以及teleporter。
+------------------------------------------------------------------------------------------
+【开发UI系统】
+学习Unity UI 1.0.0 （UGUI），学习购买的MMO UI 11。
+最新的官方【UI Toolkit】还在开发preview阶段，暂时观望。近几年还是以UGUI为重心。
 
-利用cinemachine和timeline制作并测试一下玩家的cutscene，利用default到Charging state的转换。
+【fix】refine loading screen的loading bar，自己写脚本替代掉UI自带的那个很丑的slider，用MMO UI 11包里现成的progress bar素材。
+【增加feature】切到UI界面，或者弹出UI菜单的时候，要启用鼠标cursor。Cursor.visible = true; Cursor.lockState = CursorLockMode.Confined;
+【增加feature】飞行状态时，做个meter的radial表盘F3显示高度和速度，没找到素材，等学了Photoshop再看，表针划过的区域用shader做成半透明的彩色状态。
 
-学习Unity UI 1.0.0 （UGUI）
-Unity UI Package也叫做UGUI，是官方的扩展package，就是目前版本的editor里自带的UI工具。目前主要用这个做UI开发，认真学一下。
-UI Toolkit是Unity还在开发中的新系统，目前在preview阶段，还有很多bug和功能不全，暂时观望。
-UGUI和UI Toolkit都是Unity官方团队开发的，目前uGUI用户最多，也还在更新release，但官方说UI Toolkit是他们的重心。未来应该是需要migrate到UI Toolkit，但是具体要等多少年UI Toolkit才能dominate，就很难说了，估计起码要两三年。
-refine loading screen的loading bar，自己写脚本替代掉UI自带的那个很丑的slider，可以用MMO UI 11包里现成的素材，或者商店找progress bar素材。
-切到UI界面，或者弹出UI菜单的时候，要启用鼠标cursor。
-Cursor.visible = true;
-Cursor.lockState = CursorLockMode.Confined;
-
-开始搞玩家的RPG战斗系统了！！！！！！先学习视频，确定好架构和设计！！！！
+------------------------------------------------------------------------------------------
+【开发战斗系统】
+先学习视频，确定好架构和设计！！！！
 https://www.youtube.com/watch?v=FGVkio4bnPQ  // 工厂模式
 https://www.youtube.com/watch?v=nqAHJmpWLBg  // 基于reflection的比较高级的C# Architecture from Jason
 https://www.youtube.com/watch?v=G1bd75R10m4  // State Machine
@@ -52,9 +49,25 @@ https://learn.unity.com/tutorial/introduction-to-scriptable-objects#5cf187b7edbc
 等玩家的系统做好了，修改controller，让玩家在free模式中飞行的时候每秒消耗一点魔法。一旦mana耗尽，就自动切回default状态，可能会摔死。
 在editor里，玩家的hp mana这些属性，用naughtyAttributes的ProgressBar做，看上去更直观。
 
+【增加feature】战斗时可以按Q，弹出一个radial的圆形UI菜单，供玩家切换武器。
+
+
+【升级到2020 LTS版本，春季发布】
+【fix】用新的Input System Package替代掉老的Input Manager，代码做相应的调整。
+【fix】把标注了【C# 8.0 feature not yet supported】的注释全部拿掉，替换之前的非switch expression语法版本。
+
+
+
 成就系统：
 Observer pattern实现游戏内的成就system，当玩家完成一定数量的kill或什么的，给予manacoin的奖励什么的，或者解锁某些功能，通过UI提示来反应。
 https://www.youtube.com/watch?v=Yy7Dt2usGy0
+
+
+
+
+----------------------------------------------遥遥无期----------------------------------------------
+【DOTS发布】 把整个项目migrate到DOTS版本，摒弃传统的OOP和monobehavior，采用ECS的data/code隔离的方式refactor代码。
+现阶段Burst编译器和ECS包还有很多bug，以及非常多未完成的feature。
 
 网络部分太麻烦了，以后再说：
 研究一下kinematicCharacterController中的network部分，看一下如何手动控制simulation和setTick，处理网络的延迟模拟
@@ -66,20 +79,6 @@ https://www.youtube.com/watch?v=U8-yh5nC1Mg
 https://www.youtube.com/watch?v=uNpBS0LPhaU&t=432s
 https://gamedev.stackexchange.com/questions/169977/what-am-i-suppose-to-use-instead-of-unity-resources-if-i-have-to-load-and-unload
 
-[CRITICAL CHANGE]
-1. 现阶段先凑合用老的Input Manager，因为input都比较简单。等基本框架搭起来以后，切换到新的Input System Package，脚本代码再做相应的调整。
-不要浪费时间去学习老的Input Manager体系，马上就被淘汰了，新的Input包很牛逼，功能非常强大，可以各种bind事件，根据场景切换功能什么的，是未来的大趋势。
-2. Unity的2020 LTS版本出来以后，migrate到新版本的Unity，届时，Unity会支持C# 8.0的新语法和功能，包括nullable reference类型以及default interface implementations之类的。当Interface可以支持default代码实现的时候，传统的OOP继承就基本上没有用武之地了。
+利用cinemachine和timeline制作并测试一下玩家的cutscene，利用default到Charging state的转换。
 
-！！！！！切换到2020LTS的时候，用不用新的Input System包再看情况，但是所有脚本都要重新过一遍，把标注了【C# 8.0 feature not yet supported】的注释全部拿掉，替换之前的非switch expression语法版本。
-
-继续刷Jasper的object management教程，render光照等等
-
-开工做场景切换的功能，用SceneManager，为此，需要把player的controller和相机之类的脚本，改成DontDestroyOnLoad，参考这个来实现，好好测一下：
-https://stackoverflow.com/questions/36163574/duplicates-because-of-dontdestroyonload
-同时，把preload scene和一个初步的splash screen scene搭起来，简单动画即可。
-
-研究学习一下DOTween Pro的用法，这个是用来做animation的，主要功能是interpolate一个个的keyframe.
-
-C++玩转OpenGL，研究下Cherno的视频
-用C++玩OpenGL，最好做个小项目，学习Cherno视频。
+看Cherno的视频学习一下Hazel引擎，了解OpenGL的基本原理就好，想自己做是不可能的。

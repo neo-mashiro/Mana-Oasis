@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Utilities;
 using static Utilities.MathUtils;
-using KinematicCharacterController;
 using Managers;
+using KinematicCharacterController;
 using NaughtyAttributes;
 
 namespace Players {
@@ -51,10 +52,8 @@ namespace Players {
         [HorizontalLine(3, EColor.Indigo)]
         [Header("Swim Mode")]
         [SerializeField] private Transform swimmingReferencePoint;
-        [SerializeField] private LayerMask waterLayer;
         [SerializeField] private float swimmingSpeed = 4f;
         [SerializeField] private float swimmingMovementSharpness = 3;
-        [SerializeField] private float swimmingOrientationSharpness = 2f;
         [SerializeField] private float gravityUnderWater = -0.02f;
         
         [HorizontalLine(3, EColor.Pink)]
@@ -156,6 +155,10 @@ namespace Players {
 
         // velocity from extra force
         private Vector3 _extraVelocity = Vector3.zero;
+        
+        // cached layers
+        private LayerMask _groundLayer;
+        private LayerMask _waterLayer;
 
         // sound effects
         private AudioClip _walkSound;
@@ -171,6 +174,9 @@ namespace Players {
         }
 
         private void Start() {
+            _groundLayer = LayerMask.GetMask("Ground");
+            _waterLayer = LayerMask.GetMask("Water");
+            
             _audioSource = GetComponent<AudioSource>();
             _playerStatus = GetComponent<PlayerStatus>();
         }
@@ -417,15 +423,10 @@ namespace Players {
             }
         }
 
-        public void ProcessInput(ref AICharacterInputs inputs) {
-            _moveInputVector = inputs.MoveVector;
-            _lookInputVector = inputs.LookVector;
-        }
-
         public void BeforeCharacterUpdate(float deltaTime) {
             // check if the player is underwater
             var waterHits = motor.CharacterOverlap(motor.TransientPosition, motor.TransientRotation,
-                _probedColliders, waterLayer, QueryTriggerInteraction.Collide);
+                _probedColliders, _waterLayer, QueryTriggerInteraction.Collide);
             
             if (waterHits > 0 && !ReferenceEquals(_probedColliders[0], null)) {
                 var hitPoint = Physics.ClosestPoint(
@@ -868,8 +869,19 @@ namespace Players {
             
         }
 
+        // make sure that motor's [discrete collision events] checkbox is checked, otherwise this won't be called.
+        // this will be called once for every hit collider that has a rigidbody including the ground, no matter if the
+        // character is moving or static, as a result, zero or more calls are possible in a single update.
         public void OnDiscreteCollisionDetected(Collider hitCollider) {
+            if (_groundLayer.Contains(hitCollider.gameObject.layer)) {
+                return;
+            }
             
+            if (hitCollider.CompareTag("Vehicle")) {
+                // ReSharper disable once Unity.PerformanceCriticalCodeInvocation
+                var rb = hitCollider.GetComponent<Rigidbody>();
+                AddExtraVelocity(rb.velocity * (rb.mass * 0.01f));
+            }
         }
         
         public void AddIgnoredColliders(IEnumerable<Collider> colliders) {
