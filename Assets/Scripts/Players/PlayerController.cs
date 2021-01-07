@@ -179,6 +179,8 @@ namespace Players {
             
             _audioSource = GetComponent<AudioSource>();
             _playerStatus = GetComponent<PlayerStatus>();
+            
+            AddIgnoredColliders(GetComponentsInChildren<Collider>());
         }
 
         private void TransitionToMode(ControlMode newMode) {

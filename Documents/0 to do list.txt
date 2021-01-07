@@ -5,17 +5,49 @@
 ------------------------------------------------------------------------------------------
 REMEMBER：mana oasis终归只是一个个人爱好练习项目，是个人收藏项目而不是商业游戏，可以免费发布到steam但永远不可能是商业级的AAA。
 ------------------------------------------------------------------------------------------
-啃掉root motion部分的代码，把walk和run成功实现出来。
-用animation rigging，参考Brackeys视频加上headAim rig，使得FPS的头部随着相机转动，水平正负100度之内，垂直正负90度。TPS不转动。
+walk, walk w/scythe, walk back w/scythe, walk w/rifle, walk back w/rifle
+run, run w/scythe
+strafe walk * 2, strafe walk w/scythe * 2, strafe walk w/rifle * 2
+strafe run * 2, strafe run w/scythe * 2, strafe run w/rifle * 2
+attack w large scythe * 3, attack w small scythe, shoot w rifle
 
-【增加feature】导入very animation包，做crouch，anchor和deAncho和爬楼梯，游泳，跳，飞行的动画，boost飞行加上trace effect。
-【增加feature】把新做的动画，和KCC的controller以及相机整合在一起。
+walk up stairs, run up stairs
+crouch, crouch does not allow walk
+jump, jump w/scythe
+climb on ladders, climb off ladders
+fly sitting on scythe, free fly wo/ scythe
+swim wo/ scythe, swim w/small scythe
+
+death
+0.005 0.93
+
+capsule collider不用改，也不用加Mesh collider，Unity自带的character controller和其他第三方controller都是用的capsule collider，这个并不影响后面加上IK的，哪怕是在ladder沿上，也是一只脚在上一只在下，不冲突。
+animation的blend tree是由速度决定的，和KCC的速度不一致，怎么办？一边改blend tree的参数，一边把KCC motor的move sharpness调低，使得加速时产生的lag和动画的加速视觉上匹配，就可以了。
+
+base layer，就是现有的KCC的功能，不要改，move动画只有walk和run，可以转向的，没有strafe，然后把jump，crouch，swim，climb，anchor，deAncho，fly加上，调好。
+调好base layer之后，加上IK和脚步声（高跟鞋）。【增加feature】boost飞行时加上trace effect。
+combat layer，才有strafe的动画，且可以walk back，且不能转向，只能随着mouse rotate。加上crosshair（固定距离）以后，以crosshair为target做aim ik。
+
+尝试一下用普通的shader做一个和tech48一样的姐姐人物，以tech48的动画为模板，做成texture可以换装的，然后retarget动画到姐姐身上。
+
+动画全部完成后，在动画中加脚步声等sound。人物的脚本声音，用animation event来实现，不要用KCC的ground callback，这样更精确，每次动画的脚步落地就play sound。也可以不用animation event，直接animate脚本里的bool变量，然后在脚本里根据变量play sound，这样更好，两边独立解耦。但如果要retarget到其他人物上，记得要把animate bool的keyframe删掉。跳的声音用State Machine Behaviours做，不要把代码放在KCC controller里，State Machine Behaviour很强大，enter/stay/exit某个state时都可以触发。还可以处理root motion以及IK。
+
+aim IK以及让手臂自然的去follow抓住镰刀，用animation rigging在editor里设置好，再配合OnAnimatorIK()去更新处理。
+foot IK参考那个素材，重写素材，自己用OnAnimatorIK()处理。
+Shirley，平时走路不带翅膀和镰刀，进入飞行状态的时候，动画展开翅膀并启动镰刀，镰刀相当于是飞行的扫帚。如果需要战斗，必须先按键，把镰刀拿出来，分两种模式，近战把镰刀动画变大，可以挥舞造成物理伤害，但无法使用魔法，也没有准星。远程攻击的话要把镰刀动画变成手可以握住的魔杖大小，粉水晶的部位用粒子系统或者shader graph做个动画特效，用于蓄力施法的，但远程状态下无法物理攻击。
+飞行或游泳状态下如果需要战斗的话，只利用翅膀进行飞行，而镰刀用于战斗。
+近战模式下，TPS的rotation调成和FPS一样，人物随着鼠标的转动而转动，不能朝向相机往后跑，只能后退，所以要有个后退的动画。
+远程模式下，做个准星，准星用UI-gameobject模式实现，并设置为上半身IK的target。同时，左右键改成左右的strafe移动，而人物不转向。
+
+【增加feature】学习新的Input System包，创建InputAction asset，然后用新的input系统把动画和KCC脚本以及相机整合在一起。
 【修复bug】crouch的时候，相机的followPoint也要跟着下降才行
-
+1.12号之前搞定，正好一周时间。
+-------------------------------------------------------
 【增加feature】当站在旋转的平台上时，人物要随着平台一起旋转和移动，FPS时camera带动人物旋转，TPS时camera不旋转只follow。利用新写的那个MovingPlatform的脚本。测试一下motor上的rigidbody interaction type的选项。
 【增加feature】导入car controller，实现人物开车的功能，camera要根据车子的晃动而shake。
 【增加feature】用KCC控制AI，参考example的AI脚本。
-
+1.18开学之前搞定。
+-------------------------------------------------------
 【待办事项】继续刷CatlikeCoding的教程。
 
 【fix】planet目前的逻辑是通过teleporter的进入而改变gravity的，把这个扩展一下，当玩家靠近星球一定距离的时候，OnTriggerEnter就改变gravity。
@@ -53,7 +85,6 @@ https://learn.unity.com/tutorial/introduction-to-scriptable-objects#5cf187b7edbc
 
 
 【升级到2020 LTS版本，春季发布】
-【fix】用新的Input System Package替代掉老的Input Manager，代码做相应的调整。
 【fix】把标注了【C# 8.0 feature not yet supported】的注释全部拿掉，替换之前的非switch expression语法版本。
 
 
@@ -68,6 +99,10 @@ https://www.youtube.com/watch?v=Yy7Dt2usGy0
 ----------------------------------------------遥遥无期----------------------------------------------
 【DOTS发布】 把整个项目migrate到DOTS版本，摒弃传统的OOP和monobehavior，采用ECS的data/code隔离的方式refactor代码。
 现阶段Burst编译器和ECS包还有很多bug，以及非常多未完成的feature。
+
+【未来扩展】用脚本控制Shirley的表情，比如按F2时从默认逐渐blend到生气，https://docs.unity3d.com/Manual/BlendShapes.html
+【未来扩展】用animation rigging，参考Brackeys视频加上headAim rig，使得FPS的头部随着相机转动，水平正负100度之内，垂直正负90度。TPS不转动。
+【未来扩展】实现动画的IK，以及人物换装，以及Target Matching【https://docs.unity3d.com/Manual/TargetMatching.html】这几个功能比较难，很大，目前阶段不好学，太占用时间了，而且只是微调的精细小功能，不值得现在花太多时间。
 
 网络部分太麻烦了，以后再说：
 研究一下kinematicCharacterController中的network部分，看一下如何手动控制simulation和setTick，处理网络的延迟模拟

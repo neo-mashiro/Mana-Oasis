@@ -78,3 +78,6 @@ static，no rigidbody，不规则草木什么的用convex mesh collider否则用
 另一个优化是，保证collider是比较简单的，通常是把children上的primitive组合起来成为compound collider，哪怕实在要用mesh collider也要设置成convex。要知道，Raycasting against a mesh collider is really expensive. 在使用raycast检测碰撞时，提前规定好射程，不要用mathf.Infinity，并且，Be specific on what the ray should hit and always try to specify a layer mask on the raycast function.
 
 Non-kinematic rigid bodies will ignore the hierarchy. If you make one rigid body a child of another and translate the parent. Then the child will NOT move with the parent. The child’s transform will update so that it remains in place in world space. If you want to couple rigid bodies you need to use joints.
+
+Shirley现在没法换装，她的裙子是放在mesh里面的，用不了VRoidHub的素材，只能等以后学了Blender再用blender修改。
+所以，Shirley先作为暂时的主角。后期的时候，还是自己用VRoidStudio做一个主角，配置各种Hub上的素材衣服袜子之类的，头发难不要紧，直接用Hub现成的收费素材。难点在于VRoidStudio不知道怎么做shader，可能需要导入blender或unity再做shader。到了后期，Shirley就只当作Restopia的女仆来用，可以做女仆长。她的动画保持简洁就可以了。
