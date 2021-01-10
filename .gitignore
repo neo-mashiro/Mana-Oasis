@@ -72,5 +72,8 @@ Assets/3rd-Party/
 Assets/3rd-Party.meta
 Audio
 
+Assets/Plugins/Animancer
+Assets/Plugins/VeryAnimation
+
 # temporarily ignore all scenes
 *.unity
