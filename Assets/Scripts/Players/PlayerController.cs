@@ -656,7 +656,7 @@ namespace Players {
                     }
 
                     if (motor.TransientPosition.y >= maxAltitude && currentVelocity.y > 0) {
-                        currentVelocity = new Vector3(currentVelocity.x, 0, currentVelocity.z);
+                        currentVelocity.y = 0;
                         GameManager.Instance.DisplaySystemMessage(Color.red, "ALTITUDE LIMIT", 2);
                     }
                     
@@ -680,7 +680,8 @@ namespace Players {
                         smoothedVelocity = Vector3.ProjectOnPlane(smoothedVelocity, waterSurfaceNormal);
                     }
                     
-                    currentVelocity = new Vector3(smoothedVelocity.x, smoothedVelocity.y + gravityUnderWater, smoothedVelocity.z);
+                    smoothedVelocity.y += gravityUnderWater;
+                    currentVelocity = smoothedVelocity;
                     
                     if (_extraVelocity.sqrMagnitude > 0f) {
                         currentVelocity += new Vector3(_extraVelocity.x, Mathf.Min(_extraVelocity.y, 0), _extraVelocity.z);
