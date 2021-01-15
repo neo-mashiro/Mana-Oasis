@@ -1,7 +1,7 @@
 ﻿using Players;
 using UnityEditor;
 
-[CustomEditor(typeof(MotionState))]
+[CustomEditor(typeof(MotionState), true)]
 public class HideScriptFieldInEditor : Editor {
     
     private static readonly string[] FieldsToExclude = { "m_Script" };
