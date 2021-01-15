@@ -83,6 +83,9 @@ namespace Players {
 
         // public properties
         public KinematicCharacterMotor Motor => motor;
+        public ControlMode ControlMode { get; private set; }
+        public float FlyStartingTime { get; private set; }
+        public Vector3 CurrentVelocity { get; private set; }
         
         public Vector3 Gravity {
             get => gravity;
@@ -95,10 +98,6 @@ namespace Players {
         }
 
         // private properties
-        public ControlMode ControlMode { get; private set; }
-
-        public float FlyStartingTime { get; private set; }
-
         private Ladder ActiveLadder { get; set; }
         
         private ClimbState ClimbState {
@@ -709,6 +708,8 @@ namespace Players {
                     break;
                 }
             }
+
+            CurrentVelocity = currentVelocity;
         }
         
         public void AfterCharacterUpdate(float deltaTime) {

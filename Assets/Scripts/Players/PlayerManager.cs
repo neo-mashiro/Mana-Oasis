@@ -1,4 +1,5 @@
 ﻿using NaughtyAttributes;
+using Sandbox;
 using UnityEngine;
 
 namespace Players {
@@ -7,9 +8,15 @@ namespace Players {
 
         [SerializeField] private PlayerController playerController;
         [SerializeField] private PlayerCamera playerCamera;
+        [SerializeField] private PlayerAnimatorController playerAnimatorController;
 
         private void Start() => Cursor.lockState = CursorLockMode.Locked;
-        private void Update() => UpdateCharacter();
+
+        private void Update() {
+            UpdatePlayerAnimatorController();
+            UpdateCharacter();
+        }
+        
         private void LateUpdate() => UpdateCamera();
 
         private void UpdateCharacter() {
@@ -39,6 +46,10 @@ namespace Players {
             };
 
             playerCamera.ProcessInput(ref playerCameraInputs, Time.deltaTime);
+        }
+
+        private void UpdatePlayerAnimatorController() {
+            playerAnimatorController.UpdateStateMachine();
         }
 
         [Button("Simulate External Force")]
