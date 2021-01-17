@@ -55,6 +55,7 @@ Awake: Here you setup the component you are on right now (the "this" object)
 Start: Here you setup things that depend on other components.
 当第一个Start被call的时候，整个游戏里所有脚本的Awake都已经运行完了。
 如果一个go一开始是inactive的，awake和start都不会被call，只有当它在游戏中被active了以后，awake、start和OnEnable才会被调用。
+【要注意的是】，awake被调用的前提是go为active状态，所以即使该脚本component是disabled的，只要它的go是active，awake也会被调（OnEnable则不会），而不是等到它OnEnable了才会被调（Awake is called even if the script is a disabled component of an active GameObject.）
 
 melee combat用第三人称，ranged combat用第一人称。
 
@@ -162,9 +163,16 @@ C#有自带的Timer和Stopwatch类，时间可以非常精准，当处理precisi
 
 有些脚本的名字是Unity保留的关键字，比如Folder，Audioclip，GameManager，Search之类的，当你创建一个同名的脚本时，Unity会自动给它一个图标。这对游戏本身没什么影响，但是和Unity自带的保留的功能可能会冲突，解决办法很简单，把你的脚本代码用一个namespace包起来，只要你用的是自己的namespace，而不是global的全局的namespace，就不会出现这个问题。
 
+do sth upfront
+to be decoupled from
+
 什么时候用abstract类，什么时候用interface，结合设计模式去考虑。
 前者是is-a的关系，后者是has-a的关系。前者是inherit的关系，可以用virtual和override，后者是implement的关系，可以提供多个规范。
 https://stackoverflow.com/questions/747517/interfaces-vs-abstract-classes
+https://stackoverflow.com/questions/14728761/difference-between-virtual-and-abstract-methods
+
+对于任何member包括method，property，event，indexer而言，virtual可以被override也可以不被，只是提供了override的option，但abstract必须被子类implement。当rider提示你你的某个method或者property hide隐藏了一个同类的member，可以用new关键字来明确指出你希望hide。
+Unity的event function比如Awake和Update，在abstract类中要设置成protected virtual，让子类选择性的去override它，or not。而对于property，通常设置为protected abstract，强制子类去提供具体实现。
 
 tag是用来处理批量的go的，如果某个tag只有一个go用，就显得有些没必要，但实际上这是为了性能，因为Find函数（通过name find）非常慢，会搜索全部scene的每一个go，但是findWithTag函数是优化过的，findGameObjectsWithTag也一样，只不过是返回所有该tag的go。使用tag时，脑子里先把go干净的分好类，想好tag，否则后面很乱会很难改。如果实在要find一个go，比如事先不知道该go在哪儿，或是该go要在游戏中后面才会生成，那么findWithTag是最优的选择，然而！！！通常我们都知道要找的是哪个go，所以其实可以不用在脚本里find，直接定义一个SerializeField变量，提前在编辑器中拖拽hook up上就行了，这样比findWithTag还要快很多，而且还能减少场景加载时间。
 
@@ -178,6 +186,7 @@ Code smells are usually not bugs; they are not technically incorrect and do not 
 conversion和cast是完全不同的，所以(int)x和Convert.ToInt32(x)有本质的区别，但这个问题极其复杂，具体用到了case by case搜一下。。。
 
 c#里面的struct是value-type而不是reference-type，因此不能修改struct里某个field的值。class类型以及C#9.0新推出的record类型都是referene-type，而原始类型比如int，float，string这些是value-type，这很好理解，但要注意struct也是value-type，不能当成class用，另外还有tuple也是的，所以tuple或struct一旦被创建，就是一个内存里的常量值，不能修改某个field，想修改变量的值必须要创建一个新的struct或tuple。这点和C++是不同的。In practice，struct臭名昭著有很多坑，尽量避免使用，如果要用的话，一定要用immutable版本的struct，定义readonly struct，以防出错。
+不过Unity自带的Vector3是可以直接修改x,y,z的值的，因为它们并不是raw field，而是被封装好的public property，当你修改的时候它的setter会自动new一个新的vector3，对于Quaternion以及Matrix4x4也是一样的。
 
 Input在水平和垂直的axis上的值对于键盘和手柄通常是-1到1之间，0代表没动，只有鼠标的移动是例外，可以在（-1，1）区间之外。GetAxis会返回(-1,1)之间的一个浮点数，做过smooth处理了，步长是0.05f，但GetAxisRaw没有smooth和步长，所以值只会是-1、0、1三者其中之一，没有浮点数。
 

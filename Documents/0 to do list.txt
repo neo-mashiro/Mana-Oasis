@@ -21,16 +21,45 @@ swim wo/ scythe, swim w/small scythe
 death
 0.005 0.93
 
-capsule collider不用改，也不用加Mesh collider，Unity自带的character controller和其他第三方controller都是用的capsule collider，这个并不影响后面加上IK的，哪怕是在ladder沿上，也是一只脚在上一只在下，不冲突。
-animation的blend tree是由速度决定的，和KCC的速度不一致，怎么办？一边改blend tree的参数，一边把KCC motor的move sharpness调低，使得加速时产生的lag和动画的加速视觉上匹配，就可以了。
+walk, run, idle+1, jump, crouch+move, fall, land
+climb, swim, fly(very animation, 参考魔女动画)
 
-base layer，就是现有的KCC的功能，不要改，move动画只有walk和run，可以转向的，没有strafe，然后把jump，crouch，swim，climb，anchor，deAncho，fly加上，调好。
-调好base layer之后，加上IK和脚步声（高跟鞋）。【增加feature】boost飞行时加上trace effect。
-combat layer，才有strafe的动画，且可以walk back，且不能转向，只能随着mouse rotate。加上crosshair（固定距离）以后，以crosshair为target做aim ik。
+walk_00, run_00, sprint_00
+sit_00-05
+liedown_00-03
+salute_01
+pose_02
+greet_01-04
 
-尝试一下用普通的shader做一个和tech48一样的姐姐人物，以tech48的动画为模板，做成texture可以换装的，然后retarget动画到姐姐身上。
+guard_20
+down_22-23
 
-动画全部完成后，在动画中加脚步声等sound。人物的脚本声音，用animation event来实现，不要用KCC的ground callback，这样更精确，每次动画的脚步落地就play sound。也可以不用animation event，直接animate脚本里的bool变量，然后在脚本里根据变量play sound，这样更好，两边独立解耦。但如果要retarget到其他人物上，记得要把animate bool的keyframe删掉。跳的声音用State Machine Behaviours做，不要把代码放在KCC controller里，State Machine Behaviour很强大，enter/stay/exit某个state时都可以触发。还可以处理root motion以及IK。
+飞行用翅膀做，不要骑魔杖，动画太麻烦了。
+crouch的时候不能move，否则太麻烦了。
+
+move的过程中jump下来会slide，因为land触发了以后不能进入move状态，这个要改一下。
+move的时候，按住shift不要马上加速到7，创建一个变量逐渐递增，然后clamp在7。
+crouch的时候不能jump，禁用jump。
+crouch的时候，camera镜头跟随下降。怎么办？把follow target设置成pivot或者mess center或者hips的child。
+爬楼梯的动画，找。
+climb，开始做，anchor，deAncho不用。
+然后再fly模式。【增加feature】boost飞行时加上trace effect。
+然后swim模式。
+做IK！！！！！参考animancer的例子和买的素材。
+人物的脚步声，jump声，各种动画音效加上。用animancer的event实现。
+----------------------------------------------------
+到此恭喜你，已经大功告成了，胜利在眼前。base layer全部搞定。
+
+combat layer，做上半身的简单武器动画，melee attack有三个combo（全连需要root motion，在KCC里已经写好了，目前注释掉了），没有block动作。
+range attack就是几个简单施法动作，加上crosshair（固定距离）以后，以crosshair为target做aim ik。有防御阵魔法替代block。
+
+VRoid做自己的哥特萝莉，白丝，黑色连衣裙，奈叶式法杖，名字叫？？？。retarget Satomi的动画到她身上。
+做成texture可以换装的，runtime替换mesh？？？
+
+
+
+
+
 
 aim IK以及让手臂自然的去follow抓住镰刀，用animation rigging在editor里设置好，再配合OnAnimatorIK()去更新处理。
 foot IK参考那个素材，重写素材，自己用OnAnimatorIK()处理。
