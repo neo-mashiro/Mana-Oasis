@@ -29,10 +29,10 @@ namespace Players {
         
         [HorizontalLine(1, EColor.Red)]
         [Header("Combat Motion States")]
-        // [SerializeField] private AttackState attack;
+        // [SerializeField] private CombatState combat;
         [SerializeField] private float attackTimeout;
         [SerializeField, Range(1, 3)] private int maxCombo = 3;
-        [SerializeField, Range(0, 1)] private float criticalHitChance = 0.05f;
+        [SerializeField, Range(0, 1)] private float criticalHitRate = 0.05f;
         
         // [Header("Auto Motion States")]  // motion states in auto mode, including blend shapes
         

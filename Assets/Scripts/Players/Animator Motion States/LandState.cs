@@ -20,8 +20,13 @@ namespace Players {
                 if (nextState.Priority > Priority) {
                     return true;
                 }
-
-                return nextState == AnimatorController.Idle && _canExit;
+                
+                if (nextState == AnimatorController.Idle && _canExit) {
+                    return true;
+                }
+                
+                // skip soft landing if the player starts moving as soon as hitting the ground
+                return nextState == AnimatorController.Move;
             }
         }
         
@@ -29,7 +34,7 @@ namespace Players {
             Debug.Log("Enter land state");
             _verticalLandingSpeed = AnimatorController.NextStateParameterX;
             
-            // hard landing (can exit this state as soon as possible)
+            // hard landing (can exit this state at any time)
             if (_verticalLandingSpeed < verticalSpeedThreshold) {
                 _canExit = true;
             }

@@ -29,10 +29,23 @@ namespace Players {
         public bool AirModeToggled;
         public bool ClimbModeToggled;
         public bool ShiftHeld;
+        public bool AltHeld;
+    }
+    
+    /// <summary>
+    /// Used by <see cref="PlayerAnimatorController"/> to handle motion state transitions and animations.
+    /// </summary>
+    public struct MotionStateInfo {
+        public MotionState State;
+        public float ParameterX;  // for 1D blend trees or linear mixture transitions
+        public float ParameterY;  // for 2D freeform blend trees or 2D mixture transitions
     }
 
-    // use ushort (0 to 65,535) as the enum underlying type, we can limit the number of buffs up to 15 (2^16 = 65,536)
-    // this is a reasonable limit as more buffs would introduce overcomplexity and mess up gameplay
+    /// <summary>
+    /// A bit field enumeration type that represents player's buffs combo. It uses `ushort` (0 to 65,535) as the
+    /// enum underlying type, so as to limit the number of buffs up to 15 (2^16 = 65,536), this is a reasonable limit
+    /// as more buffs would introduce overcomplexity and mess up gameplay.
+    /// </summary>
     [Flags]
     public enum PlayerBuff : ushort {
         None = 0,
@@ -44,8 +57,11 @@ namespace Players {
         Block   = 1 << 5    // immune to all debuffs
     }
     
-    // use ushort (0 to 65,535) as the enum underlying type, we can limit the number of debuffs up to 15 (2^16 = 65,536)
-    // this is a reasonable limit as more debuffs would introduce overcomplexity and mess up gameplay
+    /// <summary>
+    /// A bit field enumeration type that represents player's debuffs combo. It uses `ushort` (0 to 65,535) as the
+    /// enum underlying type, so as to limit the number of debuffs up to 15 (2^16 = 65,536), this is a reasonable limit
+    /// as more debuffs would introduce overcomplexity and mess up gameplay.
+    /// </summary>
     [Flags]
     public enum PlayerDebuff : ushort {
         None = 0,

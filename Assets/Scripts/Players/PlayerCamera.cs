@@ -13,8 +13,8 @@ namespace Players {
         [SerializeField] private PlayerController playerController;
         
         [HorizontalLine(3, EColor.Red)]
-        [Header("Target")]
-        [SerializeField] private Transform followTarget;
+        [Header("Follow Target")]
+        [SerializeField] private Transform rootTransform;
 
         [HorizontalLine(3, EColor.Pink)]
         [Header("Distance")]
@@ -85,9 +85,10 @@ namespace Players {
 
         private void Start() {
             CameraPerspective = Perspective.ThirdPerson;
-            TargetForward = followTarget.forward;
-            _followPosition = followTarget.position;
             
+            TargetForward = rootTransform.forward;
+            _followPosition = rootTransform.position + playerController.Motor.CharacterTransformToCapsuleTop;
+
             _actualDistance = _followDistance = defaultFollowDistance;
             _verticalAngle = defaultVerticalAngle;
 
@@ -98,10 +99,7 @@ namespace Players {
         }
 
         public void ProcessInput(ref PlayerCameraInputs inputs, float deltaTime) {
-            /// --------------------------------------------------------------------------------------------------------
-            /// 1. update camera's perspective
-            /// --------------------------------------------------------------------------------------------------------
-            // disable perspective switches in auto and climb mode
+            // update camera's perspective
             if (playerController.ControlMode == ControlMode.Auto || playerController.ControlMode == ControlMode.Climb) {
                 // enforce third-person perspective when player is in auto or climb mode
                 if (CameraPerspective == Perspective.FirstPerson) {
@@ -121,9 +119,7 @@ namespace Players {
                 }
             }
             
-            /// --------------------------------------------------------------------------------------------------------
-            /// 2. update camera's rotation
-            /// --------------------------------------------------------------------------------------------------------
+            // update camera's rotation
             var rotationInput = new Vector3(inputs.MovementX, inputs.MovementY, 0f);
             
             if (invertX) {
@@ -135,7 +131,7 @@ namespace Players {
             }
 
             // handle horizontal (planar) rotation input
-            var targetUp = playerController.ControlMode == ControlMode.Climb ? Vector3.up : followTarget.up;
+            var targetUp = playerController.ControlMode == ControlMode.Climb ? Vector3.up : rootTransform.up;
             var rotationFromInput = Quaternion.Euler(targetUp * (rotationInput.x * rotationSpeed));
             TargetForward = rotationFromInput * TargetForward;
             // this nested cross product operation won't change the planar direction if we are on ground
@@ -163,11 +159,11 @@ namespace Players {
             _targetRotation = Quaternion.Slerp(transform.rotation, _targetRotation, EaseFactor(rotationSharpness, deltaTime));
             transform.rotation = _targetRotation;
 
-            /// --------------------------------------------------------------------------------------------------------
-            /// 3. update camera's position (depends on the correct rotation)
-            /// --------------------------------------------------------------------------------------------------------
+            // update camera's position (depends on the correct rotation)
+            var targetPosition = rootTransform.position + playerController.Motor.CharacterTransformToCapsuleTop;
+
             if (CameraPerspective == Perspective.FirstPerson) {
-                _followPosition = Vector3.Lerp(_followPosition, followTarget.position, EaseFactor(followSharpness, deltaTime));
+                _followPosition = Vector3.Lerp(_followPosition, targetPosition, EaseFactor(followSharpness, deltaTime));
                 _actualDistance = Mathf.Lerp(_actualDistance, _followDistance, EaseFactor(zoomSharpness, deltaTime));
                 
                 transform.position = _followPosition - _targetRotation * Vector3.forward * _actualDistance;
@@ -181,7 +177,7 @@ namespace Players {
                     _followDistance = Mathf.Clamp(_followDistance, minFollowDistance, maxFollowDistance);
                 }
 
-                _followPosition = Vector3.Lerp(_followPosition, followTarget.position, EaseFactor(followSharpness, deltaTime));
+                _followPosition = Vector3.Lerp(_followPosition, targetPosition, EaseFactor(followSharpness, deltaTime));
 
                 // check obstructions
                 _obstructionCount = Physics.SphereCastNonAlloc(_followPosition, obstructionCheckRadius,
@@ -214,9 +210,7 @@ namespace Players {
                 transform.position = _targetPosition;
             }
             
-            /// --------------------------------------------------------------------------------------------------------
-            /// 4. add camera shake for third-person perspective in air mode (simple Perlin noise)
-            /// --------------------------------------------------------------------------------------------------------
+            // add camera shake for third-person perspective in air mode (simple Perlin noise)
             if (CameraPerspective == Perspective.ThirdPerson && playerController.ControlMode == ControlMode.Air) {
                 // the degree of camera shake depends on wind pulse magnitude, which is a function of flying height
                 _windPulse = Mathf.Clamp01((_targetPosition.y - minShakeAltitude) / _deltaAltitude);
