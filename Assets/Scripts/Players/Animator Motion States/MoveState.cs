@@ -20,7 +20,7 @@ namespace Players {
         }
 
         private void Update() {
-            mixerTransition.State.Parameter = AnimatorController.NextStateParameterX;
+            mixerTransition.State.Parameter = AnimatorController.ParameterX;
         }
     }
 }

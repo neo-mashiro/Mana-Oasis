@@ -22,7 +22,7 @@ namespace Players {
         [SerializeField] private LandState land;
         [SerializeField] private MoveState move;
         // [SerializeField] private ClimbState climb;
-        // [SerializeField] private FlyState fly;
+        [SerializeField] private FlyState fly;
         // [SerializeField] private SwimState swim;
         // [SerializeField] private FlinchState flinch;
         // [SerializeField] private DieState die;
@@ -42,8 +42,8 @@ namespace Players {
         public Action ForceEnterIdleState { get; private set; }
         
         public MotionState NextState { get; private set; }
-        public float NextStateParameterX { get; private set; }
-        public float NextStateParameterY { get; private set; }
+        public float ParameterX { get; private set; }
+        public float ParameterY { get; private set; }
 
         public Vector3 RootMotionDeltaPosition { get; set; }
         public Quaternion RootMotionDeltaRotation { get; set; }
@@ -55,7 +55,7 @@ namespace Players {
         public MotionState Land => land;
         public MotionState Move => move;
         // public MotionState Climb => climb;
-        // public MotionState Fly => fly;
+        public MotionState Fly => fly;
         // public MotionState Swim => swim;
         // public MotionState Attack => attack;
         // public MotionState Flinch => flinch;
@@ -75,8 +75,8 @@ namespace Players {
         public void UpdateStateMachine() {
             var motionStateInfo = playerController.MotionStateInfo;
             NextState = motionStateInfo.State;
-            NextStateParameterX = motionStateInfo.ParameterX;
-            NextStateParameterY = motionStateInfo.ParameterY;
+            ParameterX = motionStateInfo.ParameterX;
+            ParameterY = motionStateInfo.ParameterY;
 
             if (NextState != StateMachine.CurrentState) {
                 // if (StateToEnter == attack) {

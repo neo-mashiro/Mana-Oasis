@@ -1,9 +1,5 @@
 fileFormatVersion: 2
 guid: bff0f0d68d1811a4885cc8fc69fc8459
-labels:
-- Example
-- FSM
-- FiniteStateMachine
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2

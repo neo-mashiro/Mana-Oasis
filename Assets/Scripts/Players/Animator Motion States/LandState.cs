@@ -21,8 +21,8 @@ namespace Players {
                     return true;
                 }
                 
-                if (nextState == AnimatorController.Idle && _canExit) {
-                    return true;
+                if (nextState == AnimatorController.Idle || nextState == AnimatorController.Fly) {
+                    return _canExit;
                 }
                 
                 // skip soft landing if the player starts moving as soon as hitting the ground
@@ -32,7 +32,7 @@ namespace Players {
         
         private void OnEnable() {
             Debug.Log("Enter land state");
-            _verticalLandingSpeed = AnimatorController.NextStateParameterX;
+            _verticalLandingSpeed = AnimatorController.ParameterX;
             
             // hard landing (can exit this state at any time)
             if (_verticalLandingSpeed < verticalSpeedThreshold) {
@@ -41,7 +41,9 @@ namespace Players {
             // soft landing (can't transition out of this state until the playback completes)
             else {
                 _canExit = false;
-                clipTransition.Events.OnEnd = () => _canExit = true;
+                // here a regular event is safer than the end event because the state might exit early
+                clipTransition.Events.Clear();
+                clipTransition.Events.Add(1.0f, () => _canExit = true);
             }
             
             AnimatorController.Animancer.Play(clipTransition);
