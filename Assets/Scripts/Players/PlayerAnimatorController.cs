@@ -21,18 +21,18 @@ namespace Players {
         [SerializeField] private AirborneState airborne;
         [SerializeField] private LandState land;
         [SerializeField] private MoveState move;
-        // [SerializeField] private ClimbState climb;
+        [SerializeField] private ClimbState climb;
         [SerializeField] private FlyState fly;
-        // [SerializeField] private SwimState swim;
+        [SerializeField] private SwimState swim;
         // [SerializeField] private FlinchState flinch;
         // [SerializeField] private DieState die;
         
-        [HorizontalLine(1, EColor.Red)]
-        [Header("Combat Motion States")]
+        // [HorizontalLine(1, EColor.Red)]
+        // [Header("Combat Motion States")]
         // [SerializeField] private CombatState combat;
-        [SerializeField] private float attackTimeout;
-        [SerializeField, Range(1, 3)] private int maxCombo = 3;
-        [SerializeField, Range(0, 1)] private float criticalHitRate = 0.05f;
+        // [SerializeField] private float attackTimeout;
+        // [SerializeField, Range(1, 3)] private int maxCombo = 3;
+        // [SerializeField, Range(0, 1)] private float criticalHitRate = 0.05f;
         
         // [Header("Auto Motion States")]  // motion states in auto mode, including blend shapes
         
@@ -54,9 +54,9 @@ namespace Players {
         public MotionState Airborne => airborne;
         public MotionState Land => land;
         public MotionState Move => move;
-        // public MotionState Climb => climb;
+        public MotionState Climb => climb;
         public MotionState Fly => fly;
-        // public MotionState Swim => swim;
+        public MotionState Swim => swim;
         // public MotionState Attack => attack;
         // public MotionState Flinch => flinch;
         // public MotionState Die => die;
@@ -72,7 +72,7 @@ namespace Players {
             _inputBuffer = new StateMachine<MotionState>.InputBuffer(StateMachine);
         }
 
-        public void UpdateStateMachine() {
+        public void UpdateStateMachine(bool forceEnterState = false) {
             var motionStateInfo = playerController.MotionStateInfo;
             NextState = motionStateInfo.State;
             ParameterX = motionStateInfo.ParameterX;
@@ -84,7 +84,12 @@ namespace Players {
                 // }
                 // else
                 {
-                    StateMachine.TrySetState(NextState);
+                    if (forceEnterState) {
+                        StateMachine.ForceSetState(NextState);  // skip CanEnterState, canExitState checks
+                    }
+                    else {
+                        StateMachine.TrySetState(NextState);
+                    }
                 }
             }
             

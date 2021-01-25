@@ -1,65 +1,46 @@
 1月份开始，开学左右，就开始在glassdoor上投简历，找ubisoft和unity这种实习的机会。
 记得发邮件给ayoub让他介绍下有什么好的montreal的unity的岗位，他人脉广。ayoub还是非常赞的。。。。。
-不要去考Unity的资格证书，不值得的，专心加速把自己的游戏做出来。
 最后找工作展示portfolio的时候，可能没法做WebGL的build，那就录一堆短视频，把mana项目网站搭起来，publish到网页上。网页上是可以嵌入小视频的，画质非常高，不像GIF一样受到网站帧数的限制什么的，可以参考下这个例子：https://roystan.net/articles/camera-shake.html。Google可以搜到很多专门host Unity项目的服务器，可以保存游戏数据，host网页什么的，很便宜一个月几刀，搜一下。
 ------------------------------------------------------------------------------------------
 REMEMBER：mana oasis终归只是一个个人爱好练习项目，是个人收藏项目而不是商业游戏，可以免费发布到steam但永远不可能是商业级的AAA。
+
+【找工作需要展示的重点】
+0. controller + camera + basic动画系统 + inverse kinematics。
+1. combat动画系统 + 攻击特效 + enemy AI。
+2. 基于scriptableObject以及observer pattern的player status管理，HP mana之类的。
+3. UI系统（先做inventory，然后是切换武器的UI dial）
+4. save load保存数据。
+5. 有额外时间了再考虑render这块，包括光照，texture map，shader等等
 ------------------------------------------------------------------------------------------
-walk, walk w/scythe, walk back w/scythe, walk w/rifle, walk back w/rifle
-run, run w/scythe
-strafe walk * 2, strafe walk w/scythe * 2, strafe walk w/rifle * 2
-strafe run * 2, strafe run w/scythe * 2, strafe run w/rifle * 2
-attack w large scythe * 3, attack w small scythe, shoot w rifle
-
-walk up stairs, run up stairs
-crouch, crouch does not allow walk
-jump, jump w/scythe
-climb on ladders, climb off ladders
-fly sitting on scythe, free fly wo/ scythe
-swim wo/ scythe, swim w/small scythe
-
-death
-0.005 0.93
-
-walk, run, idle+1, jump, crouch+move, fall, land
-climb, swim, fly(very animation, 参考魔女动画)
-
-walk_00, run_00, sprint_00
 sit_00-05
 liedown_00-03
 salute_01
 pose_02
 greet_01-04
 
-guard_20
+guard_20  用来做防御阵施法动画
 down_22-23
 
-飞行用翅膀做，不要骑魔杖，动画太麻烦了。
-crouch的时候不能move，否则太麻烦了。
+飞行时加上翅膀。这个先不做，等把玩家的character替换成哥特萝莉了再加上。翅膀必须是humanoid avatar的一部分，并且被包含在飞行的animation clip中。平时翅膀处于disable状态，没有collider。当动画进入flystate的时候（而不是kcc进入air mode），再通过OnEnable和OnDisable进行开关，同时开启collider。
+为了模拟翅膀从后背逐渐长出来的效果，不要直接设置enabled的flag，而是start一个coroutine，从翅根的部位把mesh的透明度一点点设置为1。同时，翅膀自带一个trail renderer，最好是用particle做的，翅膀完全伸展开了以后，开启翅膀go上的trail renderer的开关（脚本控制emitting为true or false）。
 
-move的过程中jump下来会slide，因为land触发了以后不能进入move状态，这个要改一下。
-move的时候，按住shift不要马上加速到7，创建一个变量逐渐递增，然后clamp在7。
-crouch的时候不能jump，禁用jump。
-crouch的时候，camera镜头跟随下降。怎么办？把follow target设置成pivot或者mess center或者hips的child。
-爬楼梯的动画，找。
-climb，开始做，anchor，deAncho不用。
-然后再fly模式。【增加feature】boost飞行时加上trace effect。
-然后swim模式。
-做IK！！！！！参考animancer的例子和买的素材。
+VRoid做自己的哥特萝莉，白丝，黑色连衣裙，奈叶式法杖，名字叫？？？。retarget Satomi的动画到她身上。
+或者把shirley放到blender里改一下？学习blender的基础
+做成texture可以换装的，runtime替换skinnedMeshRenderer。
+==============================================================================================================
+为什么slope太逗的话，会从move进入airborne？？？难debug，以后再看。实在不行就把太陡的slope边沿前面加个box collider。
+
+walk up/down stairs，没有animation，有了animation再补。楼梯上不准run只能walk，给每个楼梯设置一个trigger collider，在KCC里处理。
+crouch的动画play的时候，脚会陷入地面，要么修改animation，要么用IK解决。
+
+做IK！！！！！参考animancer的例子和买的素材。==============================================================
 人物的脚步声，jump声，各种动画音效加上。用animancer的event实现。
 ----------------------------------------------------
 到此恭喜你，已经大功告成了，胜利在眼前。base layer全部搞定。
 
 combat layer，做上半身的简单武器动画，melee attack有三个combo（全连需要root motion，在KCC里已经写好了，目前注释掉了），没有block动作。
 range attack就是几个简单施法动作，加上crosshair（固定距离）以后，以crosshair为target做aim ik。有防御阵魔法替代block。
-
-VRoid做自己的哥特萝莉，白丝，黑色连衣裙，奈叶式法杖，名字叫？？？。retarget Satomi的动画到她身上。
-做成texture可以换装的，runtime替换mesh？？？
-
-
-
-
-
+(参考Animancer的layer example和IK example，可能还要看下event的example)
 
 aim IK以及让手臂自然的去follow抓住镰刀，用animation rigging在editor里设置好，再配合OnAnimatorIK()去更新处理。
 foot IK参考那个素材，重写素材，自己用OnAnimatorIK()处理。
@@ -67,18 +48,16 @@ Shirley，平时走路不带翅膀和镰刀，进入飞行状态的时候，动�
 飞行或游泳状态下如果需要战斗的话，只利用翅膀进行飞行，而镰刀用于战斗。
 近战模式下，TPS的rotation调成和FPS一样，人物随着鼠标的转动而转动，不能朝向相机往后跑，只能后退，所以要有个后退的动画。
 远程模式下，做个准星，准星用UI-gameobject模式实现，并设置为上半身IK的target。同时，左右键改成左右的strafe移动，而人物不转向。
+--------------------------------------------------------------------------------------------------------------------
+【XXX】继续刷CatlikeCoding的教程。
+【XXX】开始补Cherno的C++视频，CG，OpenGL
 
-【增加feature】学习新的Input System包，创建InputAction asset，然后用新的input系统把动画和KCC脚本以及相机整合在一起。
-【修复bug】crouch的时候，相机的followPoint也要跟着下降才行
-1.12号之前搞定，正好一周时间。
 -------------------------------------------------------
-【增加feature】当站在旋转的平台上时，人物要随着平台一起旋转和移动，FPS时camera带动人物旋转，TPS时camera不旋转只follow。利用新写的那个MovingPlatform的脚本。测试一下motor上的rigidbody interaction type的选项。
+【增加feature】当站在旋转的平台上时，人物要随着平台一起旋转和移动，FPS时camera带动人物旋转，TPS时camera不旋转只follow。利用新写的那个MovingPlatform的脚本。测试一下motor上的rigidbody interaction type的选项。----暂时取消，等新的DOTS Strider CC出来了重写，新的CC非常强大。
 【增加feature】导入car controller，实现人物开车的功能，camera要根据车子的晃动而shake。
-【增加feature】用KCC控制AI，参考example的AI脚本。
-1.18开学之前搞定。
--------------------------------------------------------
-【待办事项】继续刷CatlikeCoding的教程。
+【增加feature】用KCC控制AI，参考example的AI脚本。----暂时取消，等新的DOTS Strider CC
 
+-------------------------------------------------------
 【fix】planet目前的逻辑是通过teleporter的进入而改变gravity的，把这个扩展一下，当玩家靠近星球一定距离的时候，OnTriggerEnter就改变gravity。
 【增加feature】搭第一版简易地图，导入HDRP包和相关素材，搭建旋转的planet(用planet脚本)以及teleporter。
 ------------------------------------------------------------------------------------------
@@ -91,7 +70,7 @@ Shirley，平时走路不带翅膀和镰刀，进入飞行状态的时候，动�
 【增加feature】飞行状态时，做个meter的radial表盘F3显示高度和速度，没找到素材，等学了Photoshop再看，表针划过的区域用shader做成半透明的彩色状态。
 
 ------------------------------------------------------------------------------------------
-【开发战斗系统】
+【开发战斗系统（动画和IK已经做完了）】
 先学习视频，确定好架构和设计！！！！
 https://www.youtube.com/watch?v=FGVkio4bnPQ  // 工厂模式
 https://www.youtube.com/watch?v=nqAHJmpWLBg  // 基于reflection的比较高级的C# Architecture from Jason
@@ -112,6 +91,9 @@ https://learn.unity.com/tutorial/introduction-to-scriptable-objects#5cf187b7edbc
 
 【增加feature】战斗时可以按Q，弹出一个radial的圆形UI菜单，供玩家切换武器。
 
+【save load系统】json序列化
+https://www.youtube.com/watch?v=4h2CvULKqic
+
 
 【升级到2020 LTS版本，春季发布】
 【fix】把标注了【C# 8.0 feature not yet supported】的注释全部拿掉，替换之前的非switch expression语法版本。
@@ -126,6 +108,9 @@ https://www.youtube.com/watch?v=Yy7Dt2usGy0
 
 
 ----------------------------------------------遥遥无期----------------------------------------------
+【增加feature】学习新的Input System包，创建InputAction asset，然后用新的input系统把动画和KCC脚本以及相机整合在一起。最好等DOTS Strider出来再说。
+
+【Strider发布】把现有的KCC换成新的DOTS Strider controller，并把default/auto/climb/swim/air几种模式的架构改掉。现有的controller是一个差不多1000行代码的单个脚本，所有的controlMode都集中在一起，用一堆switch-case切换，虽然不影响performance，但是design非常bad，可读性较差，且改起来没那么方便。有了Strider以后，把每个controlMode放到一个单独的脚本里，每个controlMode都是有限状态机里的一个state，然后有一个“brain”脚本去管理所有的state以及state之间的transition。这样的话我的character controller就分成多个脚本，可读性很好，每次改只要改一个controlMode所对应的state就可以了。
 【DOTS发布】 把整个项目migrate到DOTS版本，摒弃传统的OOP和monobehavior，采用ECS的data/code隔离的方式refactor代码。
 现阶段Burst编译器和ECS包还有很多bug，以及非常多未完成的feature。
 

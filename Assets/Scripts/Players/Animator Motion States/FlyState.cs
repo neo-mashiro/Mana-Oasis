@@ -6,7 +6,7 @@ namespace Players {
     public class FlyState : MotionState {
 
         [SerializeField] private MixerState.Transition2D mixerTransition2D;
-        [SerializeField] private float blendSpeed = 10f;
+        [SerializeField] private float blendSpeed = 24f;
 
         public override bool CanExitState {
             get {
@@ -15,8 +15,9 @@ namespace Players {
                     return true;
                 }
 
-                return nextState == AnimatorController.Airborne || nextState == AnimatorController.Move;
-                // || nextState == AnimatorController.Climb;
+                return nextState == AnimatorController.Airborne ||
+                       nextState == AnimatorController.Move ||
+                       nextState == AnimatorController.Climb;
             }
         }
         

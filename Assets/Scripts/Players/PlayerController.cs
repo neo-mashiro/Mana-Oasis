@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Utilities;
@@ -12,23 +13,25 @@ namespace Players {
     public class PlayerController : MonoBehaviour, ICharacterController {
         
         [SerializeField] private PlayerCamera playerCamera;
+        [SerializeField] private PlayerAnimatorController animatorController;
         [SerializeField] private KinematicCharacterMotor motor;
 
         [HorizontalLine(3, EColor.Red)]
         [Header("Ground Movement")]
-        [SerializeField] private float maxStableMoveSpeed = 5f;
-        [SerializeField] private float stableMovementSharpness = 10f;
-        [SerializeField] private float rotationSharpness = 20f;
-        [SerializeField] private float boostMoveSpeed = 15f;
+        [SerializeField] private float maxWalkSpeed = 1.5f;
+        [SerializeField] private float maxRunSpeed = 4f;
+        [SerializeField] private float maxSprintSpeed = 7f;
+        [SerializeField] private float movementSharpness = 10f;
+        [SerializeField] private float rotationSharpness = 10f;
         [SerializeField] private Vector3 gravity = new Vector3(0, -30f, 0);
 
         [HorizontalLine(3, EColor.Blue)]
         [Header("Air Movement (in default mode)")]
-        [SerializeField] private float maxAirMoveSpeed = 10f;
-        [SerializeField] private float airAccelerationSpeed = 10f;
+        [SerializeField] private float maxAirMoveSpeed = 4f;
+        [SerializeField] private float airAccelerationSpeed = 5f;
         [SerializeField] private float airDrag = 0.1f;
 
-        [HorizontalLine(3, EColor.Black)]
+        [HorizontalLine(3, EColor.Yellow)]
         [Header("Jump")]
         [SerializeField] private bool allowJumpingWhenSliding = false;
         [SerializeField] private bool allowDoubleJump = false;
@@ -44,21 +47,21 @@ namespace Players {
         
         [HorizontalLine(3, EColor.Orange)]
         [Header("Air Mode")]
-        [SerializeField] private float airMoveSpeed = 15f;
+        [SerializeField] private float airMoveSpeed = 10f;
         [SerializeField] private float airSharpness = 15;
-        [SerializeField] private float boostAirMoveSpeed = 20f;
-        [SerializeField] private float maxAltitude = 400;
+        [SerializeField] private float boostAirMoveSpeed = 15f;
+        [SerializeField] private float maxAltitude = 200;
         
         [HorizontalLine(3, EColor.Indigo)]
         [Header("Swim Mode")]
-        [SerializeField] private Transform swimmingReferencePoint;
-        [SerializeField] private float swimmingSpeed = 4f;
-        [SerializeField] private float swimmingMovementSharpness = 3;
+        [SerializeField] private Transform swimReferencePoint;
+        [SerializeField] private float swimSpeed = 3f;
+        [SerializeField] private float swimSharpness = 3;
         [SerializeField] private float gravityUnderWater = -0.02f;
         
         [HorizontalLine(3, EColor.Pink)]
         [Header("Climb Mode")]
-        [SerializeField] private float climbingSpeed = 4f;
+        [SerializeField] private float climbSpeed = 4f;
         [SerializeField] private float anchoringDuration = 0.5f;
         [SerializeField] private LayerMask ladderLayer;
 
@@ -67,83 +70,69 @@ namespace Players {
         [SerializeField, ReorderableList] private List<Collider> ignoredColliders = new List<Collider>();
         [SerializeField] private OrientationMode orientationMode = OrientationMode.TowardsGravity;
         [SerializeField] private float orientationSharpness = 20f;
-        
-        [HorizontalLine(3, EColor.Yellow)]
-        [Header("Mesh and Costumes")]
-        [SerializeField] private Transform meshRoot;
-        [SerializeField] private Mesh costumeMesh;
-
-        [HorizontalLine(3, EColor.White)]
-        [Header("Audio Clips")]
-        [SerializeField] private AudioClip footstepSound;
-        [SerializeField] private AudioClip jumpSound;
-        [SerializeField] private AudioClip landSound;
-        [SerializeField] private AudioClip flySound;
-        [SerializeField] private AudioClip swimSound;
 
         // public properties
         public KinematicCharacterMotor Motor => motor;
         public ControlMode ControlMode { get; private set; }
+        public MotionStateInfo MotionStateInfo { get; private set; }
         public float FlyStartingTime { get; private set; }
-        public Vector3 CurrentVelocity { get; private set; }
         
         public Vector3 Gravity {
             get => gravity;
             set => gravity = value;
         }
-        
-        public Transform MeshRoot {
-            get => meshRoot;
-            set => meshRoot = value;
-        }
 
         // private properties
         private Ladder ActiveLadder { get; set; }
         
-        private ClimbState ClimbState {
-            get => _internalClimbState;
+        private ClimbMode ClimbMode {
+            get => _internalClimbMode;
             set {
-                _internalClimbState = value;
+                _internalClimbMode = value;
                 _anchoringTimer = 0f;
                 _anchoringStartPosition = motor.TransientPosition;
                 _anchoringStartRotation = motor.TransientRotation;
             }
         }
 
-        // attached components
-        private AudioSource _audioSource;
-        private PlayerStatus _playerStatus;
-        
-        // position and rotation inputs
+        // position and rotation input vector
         private Vector3 _moveInputVector;
         private Vector3 _lookInputVector;
         
+        // universal velocity
+        private Vector3 _currentVelocity, _lastVelocity;
+        private Vector3 _extraVelocity = Vector3.zero;
+        
+        // ground move
+        private bool _running = false;
+        private bool _sprinting = false;
+
         // obstructions
         private readonly Collider[] _probedColliders = new Collider[8];
         private readonly RaycastHit[] _probedHits = new RaycastHit[8];
 
-        // for default mode
+        // jump, crouch
         private bool _jumpRequested = false;
         private bool _jumpConsumed = false;
         private bool _jumpedThisFrame = false;
         private bool _doubleJumpConsumed = false;
         private float _timeSinceJumpRequested = Mathf.Infinity;
         private float _timeSinceLastAbleToJump = 0f;
-        private bool _shouldBeCrouching = false;
-        private bool _isCrouching = false;
         private bool _canWallJump = false;
         private Vector3 _wallJumpNormal;
-        private bool _bounceOffGround = false;
-        private bool _boostInputIsHeld = false;
-        
-        // for air and swim mode
+        private bool _shouldBeCrouching = false;
+        private bool _isCrouching = false;
+
+        // fly, swim
         private bool _jumpInputIsHeld = false;
         private bool _crouchInputIsHeld = false;
+        private bool _boostMode = false;
+        private float _submergence;
         private Collider _waterZone;
         
-        // for climb mode
+        // climb
         private float _ladderUpDownInput;
-        private ClimbState _internalClimbState;
+        private ClimbMode _internalClimbMode;
 
         private Vector3 _ladderTargetPosition;
         private Quaternion _ladderTargetRotation;
@@ -152,18 +141,9 @@ namespace Players {
         private Vector3 _anchoringStartPosition = Vector3.zero;
         private Quaternion _anchoringStartRotation = Quaternion.identity;
 
-        // velocity from extra force
-        private Vector3 _extraVelocity = Vector3.zero;
-        
         // cached layers
         private LayerMask _groundLayer;
         private LayerMask _waterLayer;
-
-        // sound effects
-        private AudioClip _walkSound;
-        private AudioClip _dashSound;
-        private AudioClip _jumpSound;
-        private AudioClip _landSound;
         
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         
@@ -176,10 +156,11 @@ namespace Players {
             _groundLayer = LayerMask.GetMask("Ground");
             _waterLayer = LayerMask.GetMask("Water");
             
-            _audioSource = GetComponent<AudioSource>();
-            _playerStatus = GetComponent<PlayerStatus>();
-            
             AddIgnoredColliders(GetComponentsInChildren<Collider>());
+
+            MotionStateInfo = new MotionStateInfo {
+                State = animatorController.Idle, ParameterX = 0f, ParameterY = 0f
+            };
         }
 
         private void TransitionToMode(ControlMode newMode) {
@@ -196,20 +177,12 @@ namespace Players {
         private void OnModeEnter(ControlMode mode, ControlMode fromMode) {
             switch (mode) {
                 case ControlMode.Default:
-                    _walkSound = null;  // depend on ground tags
-                    _dashSound = null;  // depend on ground tags
-                    _jumpSound = jumpSound;
-                    _landSound = null;  // depend on ground tags
                     break;
 
                 case ControlMode.Air:
                     motor.SetCapsuleCollisionsActivation(true);          // detect collisions or not?
                     motor.SetMovementCollisionsSolvingActivation(true);  // solve collision or not?
                     motor.SetGroundSolvingActivation(false);
-                    _walkSound = flySound;
-                    _dashSound = flySound;
-                    _jumpSound = flySound;
-                    _landSound = null;  // depend on ground tags
                     FlyStartingTime = Time.time;
                     break;
                 
@@ -217,16 +190,12 @@ namespace Players {
                     motor.SetCapsuleCollisionsActivation(true);
                     motor.SetMovementCollisionsSolvingActivation(true);
                     motor.SetGroundSolvingActivation(false);
-                    _walkSound = swimSound;
-                    _dashSound = null;
-                    _jumpSound = swimSound;
-                    _landSound = null;
                     break;
                 
                 case ControlMode.Climb:
                     motor.SetMovementCollisionsSolvingActivation(false);
                     motor.SetGroundSolvingActivation(false);
-                    ClimbState = ClimbState.Anchor;
+                    ClimbMode = ClimbMode.Anchor;
 
                     // find the point on the ladder to snap to
                     _ladderTargetPosition = ActiveLadder.ClosestPointOnLadder(motor.TransientPosition, out _deviation);
@@ -249,6 +218,7 @@ namespace Players {
                     motor.SetCapsuleCollisionsActivation(true);
                     motor.SetMovementCollisionsSolvingActivation(true);
                     motor.SetGroundSolvingActivation(true);
+                    _submergence = 0f;
                     break;
                 
                 case ControlMode.Climb:
@@ -256,21 +226,16 @@ namespace Players {
                     motor.SetGroundSolvingActivation(true);
                     break;
             }
-            
-            _walkSound = null;
-            _dashSound = null;
-            _jumpSound = null;
-            _landSound = null;
         }
 
         public void ProcessInput(ref PlayerCharacterInputs inputs) {
             // check air toggle input and apply mode transitions
-            if (inputs.AirModeToggled && !_waterZone) {
+            if (inputs.AirModeToggled && !_waterZone && !_isCrouching) {
                 TransitionToMode(ControlMode == ControlMode.Air ? ControlMode.Default : ControlMode.Air);
             }
 
             // check climb toggle input and apply mode transitions
-            if (inputs.ClimbModeToggled && ControlMode != ControlMode.Auto && ControlMode != ControlMode.Swim) {
+            if (inputs.ClimbModeToggled && !_isCrouching && ControlMode != ControlMode.Auto && ControlMode != ControlMode.Swim) {
                 var hits = motor.CharacterOverlap(motor.TransientPosition, motor.TransientRotation,
                     _probedColliders, ladderLayer, QueryTriggerInteraction.Collide);
                 
@@ -307,7 +272,7 @@ namespace Players {
                             }
                         }
                         else if (ControlMode == ControlMode.Climb) {
-                            ClimbState = ClimbState.DeAnchor;
+                            ClimbMode = ClimbMode.DeAnchor;
                             _ladderTargetPosition = motor.TransientPosition;
                             _ladderTargetRotation = motor.TransientRotation;
                             TransitionToMode(ControlMode.Default);
@@ -349,12 +314,14 @@ namespace Players {
                         _timeSinceJumpRequested = 0f;
                     }
                     
-                    if (inputs.CrouchDown) {
-                        _shouldBeCrouching = true;
-                        if (!_isCrouching) {
-                            _isCrouching = true;
-                            motor.SetCapsuleDimensions(0.5f, 1f, 0.5f);
-                            meshRoot.localScale = new Vector3(1f, 0.5f, 1f);
+                    if (inputs.CrouchDown && motor.GroundingStatus.IsStableOnGround) {
+                        // don't crouch until the player is fully stable on ground since the last frame
+                        if (motor.LastGroundingStatus.IsStableOnGround) {
+                            _shouldBeCrouching = true;
+                            if (!_isCrouching) {
+                                _isCrouching = true;
+                                StartCoroutine(CrouchCapsuleCollider(2f, 1.2f, 3.5f));
+                            }
                         }
                     }
                     // un-crouching is handled in AfterCharacterUpdate() where we can check if there's enough space to stand up
@@ -362,7 +329,8 @@ namespace Players {
                         _shouldBeCrouching = false;
                     }
 
-                    _boostInputIsHeld = inputs.ShiftHeld;
+                    _running = !_isCrouching && inputs.ShiftHeld;
+                    _sprinting = !_isCrouching && inputs.AltHeld;
 
                     break;
 
@@ -386,7 +354,7 @@ namespace Players {
                     
                     _jumpInputIsHeld = inputs.JumpHeld;
                     _crouchInputIsHeld = inputs.CrouchHeld;
-                    _boostInputIsHeld = inputs.ShiftHeld;
+                    _boostMode = inputs.ShiftHeld;
                     break;
 
                 case ControlMode.Swim:
@@ -425,31 +393,39 @@ namespace Players {
         }
 
         public void BeforeCharacterUpdate(float deltaTime) {
+            _lastVelocity = _currentVelocity;
+            
             // check if the player is underwater
             var waterHits = motor.CharacterOverlap(motor.TransientPosition, motor.TransientRotation,
                 _probedColliders, _waterLayer, QueryTriggerInteraction.Collide);
             
             if (waterHits > 0 && !ReferenceEquals(_probedColliders[0], null)) {
+                var referencePosition = swimReferencePoint.position;
                 var hitPoint = Physics.ClosestPoint(
-                    swimmingReferencePoint.position,
-                    _probedColliders[0],
+                    referencePosition, _probedColliders[0],
                     _probedColliders[0].transform.position,
                     _probedColliders[0].transform.rotation);
-                
-                // transition to swim mode if the swimming reference point is underwater
-                if (hitPoint == swimmingReferencePoint.position) {
+
+                var verticalDistance = Vector3.Dot(referencePosition - hitPoint, motor.CharacterUp);
+                var swimReferenceHeight = Vector3.Dot(referencePosition - transform.position, motor.CharacterUp);
+                _submergence = 1 - Mathf.Clamp01(verticalDistance / swimReferenceHeight);
+
+                // transition to swim mode if the reference point is almost underwater
+                if (_submergence > 0.9f) {
                     if (ControlMode != ControlMode.Swim && ControlMode != ControlMode.Auto) {
                         TransitionToMode(ControlMode.Swim);
                         _waterZone = _probedColliders[0];
                     }
                 }
                 // transition back to default mode when the reference point moves high enough above the water surface
-                else if (swimmingReferencePoint.position.y - hitPoint.y > 0.1f) {
+                else if (_submergence < 0.8f) {
                     if (ControlMode == ControlMode.Swim) {
                         TransitionToMode(ControlMode.Default);
                         _waterZone = null;
                     }
                 }
+                // when submergence is between 0.8 and 0.9, stay in the current mode (swim or move)
+                // this gives player a chance to float up and down slightly on water without mode transitions
             }
             
             switch (ControlMode) {
@@ -511,10 +487,10 @@ namespace Players {
                     break;
 
                 case ControlMode.Climb:
-                    if (ClimbState == ClimbState.Climb) {
+                    if (ClimbMode == ClimbMode.Climb) {
                         currentRotation = ActiveLadder.transform.rotation;
                     }
-                    else if (ClimbState == ClimbState.Anchor || ClimbState == ClimbState.DeAnchor) {
+                    else if (ClimbMode == ClimbMode.Anchor || ClimbMode == ClimbMode.DeAnchor) {
                         // rotate the character towards the ladder plane
                         currentRotation = Quaternion.Slerp(_anchoringStartRotation, _ladderTargetRotation, _anchoringTimer / anchoringDuration);
                     }
@@ -546,10 +522,12 @@ namespace Players {
 
                         var inputRight = Vector3.Cross(_moveInputVector, motor.CharacterUp);
                         var reorientedInput = Vector3.Cross(effectiveGroundNormal, inputRight).normalized * _moveInputVector.magnitude;
-                        var targetVelocity = reorientedInput * (_boostInputIsHeld ? boostMoveSpeed : maxStableMoveSpeed);
                         
-
-                        currentVelocity = Vector3.Lerp(currentVelocity, targetVelocity, EaseFactor(stableMovementSharpness, deltaTime));
+                        // real move speed decreases as player's legs submerge more under the water (but not yet in swim mode)
+                        var realSpeed = (_sprinting ? maxSprintSpeed : _running ? maxRunSpeed : maxWalkSpeed) * (1 - _submergence);
+                        var targetVelocity = reorientedInput * realSpeed;
+                        
+                        currentVelocity = Vector3.Lerp(currentVelocity, targetVelocity, EaseFactor(movementSharpness, deltaTime));
                     }
 
                     // air movement
@@ -589,11 +567,10 @@ namespace Players {
                     // handle jump
                     _jumpedThisFrame = false;
                     _timeSinceJumpRequested += deltaTime;
+                    _jumpRequested = _jumpRequested && !_isCrouching;  // disable jump in crouch state
 
                     if (_jumpRequested) {
-                        var isOnGround = allowJumpingWhenSliding
-                            ? motor.GroundingStatus.FoundAnyGround
-                            : motor.GroundingStatus.IsStableOnGround;
+                        var isOnGround = allowJumpingWhenSliding ? motor.GroundingStatus.FoundAnyGround : motor.GroundingStatus.IsStableOnGround;
 
                         // double jump
                         if (_jumpConsumed) {
@@ -633,8 +610,25 @@ namespace Players {
                     }
 
                     _canWallJump = false;
+                    
+                    // // in some states, interpolate forward speed from root motion can help smooth out movement
+                    // var currentMotionState = animatorController.StateMachine.CurrentState;
+                    //
+                    // if (motor.GroundingStatus.IsStableOnGround && deltaTime > 0 &&
+                    //     currentMotionState == animatorController.Combat) {
+                    //     
+                    //     var rootForwardSpeed = animatorController.RootMotionDeltaPosition.z / deltaTime;
+                    //     var forwardVector = Vector3.Project(currentVelocity, motor.CharacterForward);
+                    //     var planarVector = Vector3.ProjectOnPlane(currentVelocity, motor.CharacterForward);
+                    //     
+                    //     currentVelocity = planarVector + forwardVector * (rootForwardSpeed / forwardVector.magnitude);
+                    // }
+                    //
+                    // // reset animator root motion
+                    // animatorController.RootMotionDeltaPosition = Vector3.zero;
+                    // animatorController.RootMotionDeltaRotation = Quaternion.identity;
 
-                    // apply extra velocity if any
+                    // apply extra velocity if there's any
                     if (_extraVelocity.sqrMagnitude > 0f) {
                         currentVelocity += _extraVelocity;
                         _extraVelocity = Vector3.zero;
@@ -645,8 +639,10 @@ namespace Players {
 
                 case ControlMode.Air: {
                     var verticalInput = 0f + (_jumpInputIsHeld ? 1f : 0f) + (_crouchInputIsHeld ? -1f : 0f);
-                    var moveSpeed = _boostInputIsHeld ? boostAirMoveSpeed : airMoveSpeed;
-                    var targetVelocity = (_moveInputVector + motor.CharacterUp * verticalInput).normalized * moveSpeed;
+                    var moveSpeed = _boostMode ? boostAirMoveSpeed : airMoveSpeed;
+                    var targetVelocity = _moveInputVector.normalized * moveSpeed;
+                    targetVelocity += motor.CharacterUp.normalized * (verticalInput * moveSpeed * 0.5f);
+                    
                     currentVelocity = Vector3.Lerp(currentVelocity, targetVelocity, EaseFactor(airSharpness, deltaTime));
                     
                     if (_extraVelocity.sqrMagnitude > 0f) {
@@ -664,24 +660,20 @@ namespace Players {
 
                 case ControlMode.Swim: {
                     var verticalInput = 0 + (_jumpInputIsHeld ? 1f : 0f) + (_crouchInputIsHeld ? -1f : 0f);
-                    var targetVelocity = (_moveInputVector + motor.CharacterUp * verticalInput).normalized * swimmingSpeed;
-                    var smoothedVelocity = Vector3.Lerp(currentVelocity, targetVelocity, EaseFactor(swimmingMovementSharpness, deltaTime));
+                    var targetVelocity = _moveInputVector.normalized * swimSpeed;
+                    targetVelocity += motor.CharacterUp.normalized * (verticalInput * swimSpeed * 1f);
+                    var smoothedVelocity = Vector3.Lerp(currentVelocity, targetVelocity, EaseFactor(swimSharpness, deltaTime));
 
-                    // see if our swimming reference point would be out of water after the update
-                    var newReferencePointPosition = swimmingReferencePoint.position + smoothedVelocity * deltaTime;
-                    var closestPointOnWater = Physics.ClosestPoint(newReferencePointPosition, _waterZone,
-                        _waterZone.transform.position, _waterZone.transform.rotation);
-
-                    if ((closestPointOnWater - newReferencePointPosition).sqrMagnitude > 1e-2) {
-                        // if so, project the velocity onto the water surface so that we won't fly off when being close to the surface
-                        // we can set the reference point to be near the neck/shoulder, thus the player can stick her head out of water
-                        var waterSurfaceNormal = (newReferencePointPosition - closestPointOnWater).normalized;
-                        smoothedVelocity = Vector3.ProjectOnPlane(smoothedVelocity, waterSurfaceNormal);
+                    // when we are floating on the water, project any positive upward velocity onto the surface
+                    if (_submergence < 0.9f && smoothedVelocity.y > 0) {
+                        smoothedVelocity = Vector3.ProjectOnPlane(smoothedVelocity, Vector3.up);
                     }
-                    
-                    smoothedVelocity.y += gravityUnderWater;
+                    else {
+                        smoothedVelocity.y += gravityUnderWater;
+                    }
+
                     currentVelocity = smoothedVelocity;
-                    
+
                     if (_extraVelocity.sqrMagnitude > 0f) {
                         currentVelocity += new Vector3(_extraVelocity.x, Mathf.Min(_extraVelocity.y, 0), _extraVelocity.z);
                         _extraVelocity = Vector3.zero;
@@ -693,14 +685,14 @@ namespace Players {
                 case ControlMode.Climb: {
                     currentVelocity = Vector3.zero;
 
-                    switch (ClimbState) {
-                        case ClimbState.Climb:
-                            currentVelocity = (_ladderUpDownInput * ActiveLadder.transform.up).normalized * climbingSpeed;
+                    switch (ClimbMode) {
+                        case ClimbMode.Climb:
+                            currentVelocity = (_ladderUpDownInput * ActiveLadder.transform.up).normalized * climbSpeed;
                             break;
-                        // this is how we snap to the ladder, which is done through a simple interpolation of the character's
-                        // position and rotation, but in a real game this would normally be done with specific animations
-                        case ClimbState.Anchor:
-                        case ClimbState.DeAnchor:
+                        // this is how we snap to the ladder, which is done through a simple interpolation of the
+                        // character's position and rotation, in order to simplify snapping animations
+                        case ClimbMode.Anchor:
+                        case ClimbMode.DeAnchor:
                             var tmpPosition = Vector3.Lerp(_anchoringStartPosition, _ladderTargetPosition, (_anchoringTimer / anchoringDuration));
                             currentVelocity = motor.GetVelocityForMovePosition(motor.TransientPosition, tmpPosition, deltaTime);
                             break;
@@ -709,7 +701,7 @@ namespace Players {
                 }
             }
 
-            CurrentVelocity = currentVelocity;
+            _currentVelocity = currentVelocity;
         }
         
         public void AfterCharacterUpdate(float deltaTime) {
@@ -735,12 +727,8 @@ namespace Players {
                     // un-crouch if there's enough space to stand up
                     if (_isCrouching && !_shouldBeCrouching) {
                         motor.SetCapsuleDimensions(0.5f, 2f, 1f);
-                        var overlapsCount = motor.CharacterOverlap(
-                            motor.TransientPosition,
-                            motor.TransientRotation,
-                            _probedColliders,
-                            motor.CollidableLayers,
-                            QueryTriggerInteraction.Ignore);
+                        var overlapsCount = motor.CharacterOverlap(motor.TransientPosition, motor.TransientRotation,
+                            _probedColliders, motor.CollidableLayers, QueryTriggerInteraction.Ignore);
                         
                         // obstructions detected, back to crouching
                         if (overlapsCount > 0) {
@@ -748,8 +736,9 @@ namespace Players {
                         }
                         // no obstructions, stand up
                         else {
-                            meshRoot.localScale = new Vector3(1f, 1f, 1f);
                             _isCrouching = false;
+                            motor.SetCapsuleDimensions(0.5f, 1f, 0.5f);
+                            StartCoroutine(CrouchCapsuleCollider(1.2f, 2f, 3.5f));
                         }
                     }
                     
@@ -758,12 +747,12 @@ namespace Players {
 
                 case ControlMode.Climb: {
                     // in climb state, check if we are still on the ladder
-                    if (ClimbState == ClimbState.Climb) {
+                    if (ClimbMode == ClimbMode.Climb) {
                         ActiveLadder.ClosestPointOnLadder(motor.TransientPosition, out _deviation);
 
                         // climb off the ladder, transition to de-anchor state
                         if (Mathf.Abs(_deviation) > 0.05f) {
-                            ClimbState = ClimbState.DeAnchor;
+                            ClimbMode = ClimbMode.DeAnchor;
                             
                             if (_deviation > 0) {
                                 _ladderTargetPosition = ActiveLadder.TopReleasePoint.position;
@@ -776,12 +765,12 @@ namespace Players {
                         }
                     }
                     // in anchor or de-anchor state, prepare to transition to either climb or default state
-                    else if (ClimbState == ClimbState.Anchor || ClimbState == ClimbState.DeAnchor) {
+                    else if (ClimbMode == ClimbMode.Anchor || ClimbMode == ClimbMode.DeAnchor) {
                         if (_anchoringTimer >= anchoringDuration) {
-                            if (ClimbState == ClimbState.Anchor) {
-                                ClimbState = ClimbState.Climb;
+                            if (ClimbMode == ClimbMode.Anchor) {
+                                ClimbMode = ClimbMode.Climb;
                             }
-                            else if (ClimbState == ClimbState.DeAnchor) {
+                            else if (ClimbMode == ClimbMode.DeAnchor) {
                                 TransitionToMode(ControlMode.Default);
                             }
                         }
@@ -792,6 +781,76 @@ namespace Players {
                     break;
                 }
             }
+            
+            // determine player's expected motion state in the animator state machine
+            MotionState motionState;
+            var parameterX = 0f;
+            var parameterY = 0f;
+            
+            switch (ControlMode) {
+                case ControlMode.Default:
+                    // possible states: idle, crouch, jump, airborne, land, move
+                    if (_jumpedThisFrame) {
+                        motionState = animatorController.Jump;
+                    }
+                    else if (_isCrouching) {
+                        motionState = animatorController.Crouch;
+                        parameterX = Vector3.Dot(_currentVelocity, motor.CharacterForward);  // moving speed
+                    }
+                    else if (!motor.GroundingStatus.IsStableOnGround && !motor.LastGroundingStatus.IsStableOnGround) {
+                        motionState = animatorController.Airborne;
+                    }
+                    else if (motor.GroundingStatus.IsStableOnGround && !motor.LastGroundingStatus.IsStableOnGround) {
+                        motionState = animatorController.Land;
+                        parameterX = Vector3.Dot(_lastVelocity, -motor.CharacterUp);  // vertical landing speed
+                    }
+                    else {
+                        if (_moveInputVector != Vector3.zero) {
+                            motionState = animatorController.Move;
+                            parameterX = Vector3.Dot(_currentVelocity, motor.CharacterForward);  // moving speed
+                        }
+                        else {
+                            motionState = animatorController.Idle;
+                        }
+                    }
+                    break;
+                
+                case ControlMode.Climb:
+                    if (ClimbMode == ClimbMode.DeAnchor) {
+                        motionState = animatorController.Idle;
+                        break;
+                    }
+                    else {
+                        motionState = animatorController.Climb;
+                        parameterX = ClimbMode == ClimbMode.Climb ? Vector3.Dot(_currentVelocity, motor.CharacterUp) : 0f;
+                        break;
+                    }
+
+                case ControlMode.Air:
+                    motionState = animatorController.Fly;
+                    parameterX = Vector3.Dot(_currentVelocity, motor.CharacterForward);  // forward moving speed
+                    parameterY = Vector3.Dot(_currentVelocity, motor.CharacterUp);  // vertical moving speed
+                    break;
+                
+                case ControlMode.Swim:
+                    motionState = animatorController.Swim;
+                    parameterX = Vector3.Dot(_currentVelocity, motor.CharacterForward);
+                    parameterY = Vector3.Dot(_currentVelocity, motor.CharacterUp);
+                    break;
+                
+                // case ControlMode.Auto:
+                //     state = idle;
+                //     break;
+                
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            MotionStateInfo = new MotionStateInfo {
+                State = motionState, ParameterX = parameterX, ParameterY = parameterY
+            };
+            
+            animatorController.UpdateStateMachine();
         }
 
         public bool IsColliderValidForCollisions(Collider other) {
@@ -805,29 +864,7 @@ namespace Players {
         }
 
         public void OnGroundHit(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport) {
-            // change audio sound based on ground tags
-            if (hitCollider.CompareTag("SnowGround")) {
-                _walkSound = footstepSound;
-                _dashSound = footstepSound;
-                _jumpSound = jumpSound;
-                _landSound = landSound;
-            }
-            else if (hitCollider.CompareTag("WoodGround")) {
-
-            }
-            else if (hitCollider.CompareTag("MarbleGround")) {
-
-            }
-            else if (hitCollider.CompareTag("MeadowGround")) {
-
-            }
-            else if (hitCollider.CompareTag("SandGround")) {
-
-            }
-            else if (hitCollider.CompareTag("BounceGround")) {
-                // bounce off the ground a little bit on the next update
-                _bounceOffGround = true;
-            }
+            
         }
 
         public void OnMovementHit(Collider hitCollider, Vector3 hitNormal, Vector3 hitPoint, ref HitStabilityReport hitStabilityReport) {
@@ -844,27 +881,11 @@ namespace Players {
             switch (motor.GroundingStatus.IsStableOnGround) {
                 // player lands on the ground
                 case true when !motor.LastGroundingStatus.IsStableOnGround: {
-                    _audioSource.PlayOneShot(_landSound);
-                    if (_bounceOffGround) {
-                        AddExtraVelocity(motor.CharacterUp * (jumpUpSpeed * 0.3f));
-                        _bounceOffGround = false;
-                    }
-
                     break;
                 }
-                // player leaves the ground (not necessarily jumping, could be falling off platforms, etc.)
+                // player leaves the ground (not necessarily jumping, could be falling off edges, stepping on a steep slope, etc.)
                 case false when motor.LastGroundingStatus.IsStableOnGround:
-                    _audioSource.PlayOneShot(_jumpSound);
                     break;
-            }
-        }
-
-        /// <summary>
-        /// Adds extra velocity to the character to simulate explosion forces, hit impacts, wind zones, impulses, etc.
-        /// </summary>
-        public void AddExtraVelocity(Vector3 velocity) {
-            if (ControlMode != ControlMode.Auto && ControlMode != ControlMode.Climb) {
-                _extraVelocity = velocity;
             }
         }
 
@@ -892,6 +913,37 @@ namespace Players {
             ignoredColliders.Clear();
             ignoredColliders.AddRange(colliders);
         }
+        
+        /// <summary>
+        /// Adds extra velocity to the character to simulate explosion forces, hit impacts, wind zones, impulses, etc.
+        /// </summary>
+        public void AddExtraVelocity(Vector3 velocity) {
+            if (ControlMode != ControlMode.Auto && ControlMode != ControlMode.Climb) {
+                _extraVelocity = velocity;
+            }
+        }
 
+        private IEnumerator CrouchCapsuleCollider(float fromHeight, float toHeight, float speed) {
+            var height = fromHeight;
+            
+            // crouch down
+            if (fromHeight > toHeight) {
+                while (height > toHeight) {
+                    height -= Time.deltaTime * speed;
+                    height = Mathf.Max(height, toHeight - 0.001f);
+                    motor.SetCapsuleDimensions(0.5f, height, height * 0.5f);
+                    yield return null;
+                }
+            }
+            // crouch up
+            else {
+                while (height < toHeight) {
+                    height += Time.deltaTime * speed;
+                    height = Mathf.Min(height, toHeight + 0.001f);
+                    motor.SetCapsuleDimensions(0.5f, height, height * 0.5f);
+                    yield return null;
+                }
+            }
+        }
     }
 }

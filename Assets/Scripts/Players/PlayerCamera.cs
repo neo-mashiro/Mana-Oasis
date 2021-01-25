@@ -8,6 +8,7 @@ using NaughtyAttributes;
 
 namespace Players {
     
+    [RequireComponent(typeof(Camera))]
     public class PlayerCamera : MonoBehaviour {
         
         [SerializeField] private PlayerController playerController;
@@ -15,6 +16,7 @@ namespace Players {
         [HorizontalLine(3, EColor.Red)]
         [Header("Follow Target")]
         [SerializeField] private Transform rootTransform;
+        [SerializeField] private SkinnedMeshRenderer characterMeshRenderer;
 
         [HorizontalLine(3, EColor.Pink)]
         [Header("Distance")]
@@ -33,7 +35,7 @@ namespace Players {
         [SerializeField, Range(-90f, 90f)] public float minVerticalAngle = -40f;
         [SerializeField, Range(-90f, 90f)] public float maxVerticalAngle = 90f;
         [SerializeField] private float rotationSpeed = 1f;
-        [SerializeField] private float rotationSharpness = 10000f;
+        [SerializeField] private float rotationSharpness = 1000f;
 
         [HorizontalLine(3, EColor.Green)]
         [Header("Obstruction")]
@@ -87,8 +89,7 @@ namespace Players {
             CameraPerspective = Perspective.ThirdPerson;
             
             TargetForward = rootTransform.forward;
-            _followPosition = rootTransform.position + playerController.Motor.CharacterTransformToCapsuleTop;
-
+            _followPosition = rootTransform.position + playerController.Motor.CharacterTransformToCapsuleTopHemi;
             _actualDistance = _followDistance = defaultFollowDistance;
             _verticalAngle = defaultVerticalAngle;
 
@@ -160,7 +161,7 @@ namespace Players {
             transform.rotation = _targetRotation;
 
             // update camera's position (depends on the correct rotation)
-            var targetPosition = rootTransform.position + playerController.Motor.CharacterTransformToCapsuleTop;
+            var targetPosition = rootTransform.position + playerController.Motor.CharacterTransformToCapsuleTopHemi;
 
             if (CameraPerspective == Perspective.FirstPerson) {
                 _followPosition = Vector3.Lerp(_followPosition, targetPosition, EaseFactor(followSharpness, deltaTime));
@@ -211,6 +212,8 @@ namespace Players {
             }
             
             // add camera shake for third-person perspective in air mode (simple Perlin noise)
+            // we don't want to add camera shake in first-person perspective, because that would easily lead to
+            // motion sickness without our humanoid character as a reference object
             if (CameraPerspective == Perspective.ThirdPerson && playerController.ControlMode == ControlMode.Air) {
                 // the degree of camera shake depends on wind pulse magnitude, which is a function of flying height
                 _windPulse = Mathf.Clamp01((_targetPosition.y - minShakeAltitude) / _deltaAltitude);
@@ -253,9 +256,11 @@ namespace Players {
             if (toPerspective == Perspective.FirstPerson) {
                 _cachedDistance = _followDistance;
                 _followDistance = 0f;
+                characterMeshRenderer.enabled = false;
             }
             else {
                 _followDistance = _cachedDistance;
+                characterMeshRenderer.enabled = true;
             }
         }
     }

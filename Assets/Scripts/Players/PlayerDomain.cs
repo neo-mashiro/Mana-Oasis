@@ -7,7 +7,7 @@ namespace Players {
 
     public enum ControlMode { Default, Auto, Air, Swim, Climb }
 
-    public enum ClimbState { Anchor, Climb, DeAnchor }
+    public enum ClimbMode { Anchor, Climb, DeAnchor }
 
     public enum OrientationMode { TowardsGravity, TowardsGravityAndSlope }
     
