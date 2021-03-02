@@ -5,7 +5,7 @@
 
 **Statistics API**: https://api.github.com/repos/neo-mashiro/mana-oasis
 
-3D reconstruction of my imagination world...
+4D reconstruction of my imaginary world...
 
 This project aims to build an exploration RPG game that provides players with immersive experience, targeted at high-end PCs and VR platforms. The expected release date is Sep, 2022. (I'll publish it on Steam when the time comes)
 
