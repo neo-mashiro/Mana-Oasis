@@ -10,7 +10,8 @@
 
 由于这个项目的规模比较大，设计模式还是比较复杂的，所以最后整理一份UML图画出来放在document里。Unity项目和普通的OOP设计有本质的区别，传统的class diagram并不能反应设计结构，可以做更加high-level一点的图，把项目大致脉络可视化出来就行了。
 
-在项目网页html的最后，不要忘了credit那些参考的教程和视频，把Blender，UGuru，Jason，Brackeys，Jasper Flick，还有那个utility库的作者，都写在Special thanks的感谢栏里，并给出他们的教程和视频链接等等
+在项目网页html的最后，不要忘了credit那些参考的教程和视频，把Blender，UGuru，Jason，Brackeys，Jasper Flick，还有那个utility库的作者，都写在Special thanks的感谢栏里，并给出他们的教程和视频链接等等。
++ CMU 15-462/662  https://www.youtube.com/playlist?list=PL9_jI1bdZmz2emSh0UQ5iOdT2xRHFHL7E
 
 
 a small part of the spectrum of relevant topics

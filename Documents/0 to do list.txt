@@ -1,8 +1,12 @@
 1月份开始，开学左右，就开始在glassdoor上投简历，找ubisoft和unity这种实习的机会。
 记得发邮件给ayoub让他介绍下有什么好的montreal的unity的岗位，他人脉广。ayoub还是非常赞的。。。。。
 最后找工作展示portfolio的时候，可能没法做WebGL的build，那就录一堆短视频，把mana项目网站搭起来，publish到网页上。网页上是可以嵌入小视频的，画质非常高，不像GIF一样受到网站帧数的限制什么的，可以参考下这个例子：https://roystan.net/articles/camera-shake.html。Google可以搜到很多专门host Unity项目的服务器，可以保存游戏数据，host网页什么的，很便宜一个月几刀，搜一下。
+4月如果政府还没有CAQ自动续期到年底的消息，就主动申请续CAQ（用我妈最后打的5万+存款+车的title证明）。然后78月份催office早点出毕业信，如果没能在831之前出来，就等到9月份身份失效，拿到毕业信再申请工签同时加上restore学签（先工签后restore，把工签申请的receipt贴在restore申请里），restore就是extend学签（用已经自动或手动续好的CAQ）但要在pdf表里选restore那个checkbox。
 ------------------------------------------------------------------------------------------
 REMEMBER：mana oasis终归只是一个个人爱好练习项目，是个人收藏项目而不是商业游戏，可以免费发布到steam但永远不可能是商业级的AAA。
+
+等水原千鹤的新抱枕套！！！要图案最清纯精美的！！！
+工作了再补千鹤的桌面手办！！！
 
 【找工作需要展示的重点】
 0. controller + camera + basic动画系统 + inverse kinematics。
@@ -24,7 +28,8 @@ down_22-23
 飞行时加上翅膀。这个先不做，等把玩家的character替换成哥特萝莉了再加上。翅膀必须是humanoid avatar的一部分，并且被包含在飞行的animation clip中。平时翅膀处于disable状态，没有collider。当动画进入flystate的时候（而不是kcc进入air mode），再通过OnEnable和OnDisable进行开关，同时开启collider。
 为了模拟翅膀从后背逐渐长出来的效果，不要直接设置enabled的flag，而是start一个coroutine，从翅根的部位把mesh的透明度一点点设置为1。同时，翅膀自带一个trail renderer，最好是用particle做的，翅膀完全伸展开了以后，开启翅膀go上的trail renderer的开关（脚本控制emitting为true or false）。
 
-VRoid做自己的哥特萝莉，白丝，黑色连衣裙，奈叶式法杖，名字叫？？？。retarget Satomi的动画到她身上。
+VRoid做自己的哥特萝莉，白丝，黑色圆头萝莉皮鞋，黑色连衣裙，奈叶式法杖，名字叫？？？。retarget Satomi的动画到她身上。
+另一套装束是，水蓝色连衣裙，白丝，加一个银色的脚环，红色高跟鞋，超赞！！！！！！！！！！！！！
 或者把shirley放到blender里改一下？学习blender的基础
 做成texture可以换装的，runtime替换skinnedMeshRenderer。
 ==============================================================================================================
@@ -33,9 +38,21 @@ VRoid做自己的哥特萝莉，白丝，黑色连衣裙，奈叶式法杖，名
 walk up/down stairs，没有animation，有了animation再补。楼梯上不准run只能walk，给每个楼梯设置一个trigger collider，在KCC里处理。
 crouch的动画play的时候，脚会陷入地面，要么修改animation，要么用IK解决。
 
+TPS的时候，crosshair的rotation要clamp在一定范围内，保证玩家的look at ik动画看起来正常。
+FPS的时候，玩家自动随着crosshair旋转，所以无所谓。
 做IK！！！！！参考animancer的例子和买的素材。==============================================================
+https://forum.unity.com/threads/foot-ik-system-without-weight-curves.470853/
+爬楼梯就用普通的walk动画，但是要计算好脚落地的位置，不要在台阶的ledge上。
 人物的脚步声，jump声，各种动画音效加上。用animancer的event实现。
 ----------------------------------------------------
+==============================================================
+==============================================================
+==============================================================
+【【【【【【【【【【【【【【【【【【【    周末交房租    】】】】】】】】】】】】】】】】】】】】】
+==============================================================
+==============================================================
+==============================================================
+==============================================================
 到此恭喜你，已经大功告成了，胜利在眼前。base layer全部搞定。
 
 combat layer，做上半身的简单武器动画，melee attack有三个combo（全连需要root motion，在KCC里已经写好了，目前注释掉了），没有block动作。
@@ -49,8 +66,12 @@ Shirley，平时走路不带翅膀和镰刀，进入飞行状态的时候，动�
 近战模式下，TPS的rotation调成和FPS一样，人物随着鼠标的转动而转动，不能朝向相机往后跑，只能后退，所以要有个后退的动画。
 远程模式下，做个准星，准星用UI-gameobject模式实现，并设置为上半身IK的target。同时，左右键改成左右的strafe移动，而人物不转向。
 --------------------------------------------------------------------------------------------------------------------
-【XXX】继续刷CatlikeCoding的教程。
+【XXX】继续刷CatlikeCoding的教程。先把所有教程过一遍，不用实现，只理解知识内容。后面肯定要回来过第二遍的。过完了第一遍，会有个更完整的大局观，对接下来的开发会有提速的效果。争取两周之内刷完，只要阅读和在atom里记笔记就行了。
 【XXX】开始补Cherno的C++视频，CG，OpenGL
+
+【XXX】--------------做Quantum Console，这个改一下demo素材就好应该很快的！！！
+【XXX】--------------是时候把地图换掉了，快看吐了。开一个新的project把HDRP试一下，不卡的话，把Crest Ocean的水和easy road和Gaia的demo scene导入两个不同的scene，用HQ Portal切换场景，然后把skybox换成allsky的素材，用一些买的mesh effects。或者先学一下catlikecoding的SRP管线再说，看能不能custom一些东西。不要用URP，URP虽然性能很快，比default还快，但是只适合mobile和2D游戏，我早晚都是要用HDRP的。
+传送门统一用蓝色半透明，除非是特殊地图的特殊入口。传送门有个abstract类的脚本，定义传送门的基本功能，其中包括一个property存储传送目的地（可以为多选），另一个property CanTeleport定义传送是否是allowed。每个传送门都挂一个脚本去implement这个抽象类，CanTeleport取决于玩家的等级、故事线触发等条件。每个传送门都有个trigger collider，当玩家进入范围时触发OnTriggerEnter，如果CanTeleport为true，传送门变为绿色，否则变为红色。
 
 -------------------------------------------------------
 【增加feature】当站在旋转的平台上时，人物要随着平台一起旋转和移动，FPS时camera带动人物旋转，TPS时camera不旋转只follow。利用新写的那个MovingPlatform的脚本。测试一下motor上的rigidbody interaction type的选项。----暂时取消，等新的DOTS Strider CC出来了重写，新的CC非常强大。

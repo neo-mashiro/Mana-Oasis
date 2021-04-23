@@ -66,7 +66,7 @@ preload scene主要用来生成那些persistent的go，service之类的，也就
 如何carry数据across scenes？？？
     https://gamedev.stackexchange.com/questions/110958/what-is-the-proper-way-to-handle-data-between-scenes
     https://stackoverflow.com/questions/32306704/how-to-pass-data-between-scenes-in-unity
-playerPrefs是用来存放游戏的配置数据的，是游戏的Preferences数据，比如音量分辨率之类的，而不是用来存游戏数据的。
+playerPrefs是用来存放游戏的配置数据的，是游戏的Preferences数据，比如音量分辨率之类的，而不是用来存游戏数据的。playerPrefs采用的是最简单粗暴的方法，把这些settings数据全部存储为string，没有任何序列化操作，不方便管理，且当数据较大时难以scale，因此不要用playerPrefs来做save/load系统，仅仅只是存储游戏的settings设定和玩家preference而已！！！
 在游戏session中，存放数据用ScriptableObject，SO非常灵活，可以方便的carry数据across scenes，但是SO只在当前session内存活，当application退出后SO的数据就没有了，所以可以用ISerializationCallbackReceiver来写自己的custom序列化逻辑，application quit的时候会序列化调用这个callback，就可以手动把游戏数据保存到本地，然后下次打开游戏的时候再从本地load数据到SO里。序列化就用简单的File I/O来做，利用Unity自带的JsonUtility class。
 Zenject这种Injection框架太复杂了，现在没时间去消化，工作了以后再考虑。
 
@@ -115,7 +115,9 @@ DestroyImmediate();                  // 千万不要用，非常危险！！！�
 
 PhysX的重力加速度是常数，默认9.81，可以在脚本中通过Physics.gravity.y访问，也可以在Physics project settings中设置。对于某个特殊的scene比如月球场景，可以在loadScene时把Physics.gravity设置成Vector3(0, -4.9f, 0)，即地球的一半，不过要记得换场景时设回-9.81f。
 
-实现一个物体在两点之间来回bounce，有几种方法。首先是Mathf.PingPong，像乒乓球一样反弹，然后还可以用两个方向相反的lerp族函数，使得反弹平滑，再有就是利用三角函数sin,cos，利用sine wave自然的平滑性质，并且可以自己调节wave的形状和频率，实现各种效果。
+实现一个物体在两点之间来回bounce，有几种方法。首先是Mathf.PingPong，像乒乓球一样反弹，然后还可以用两个方向相反的lerp族函数，使得反弹平滑，再有就是利用三角函数sin,cos，利用sine wave自然的平滑性质，并且可以自己调节wave的形状和频率参数，实现各种效果。但最直观最平滑的办法是用animationCurve，在脚本里加一个animationCurve的serializeField，然后在inspector里拖动成想要的曲线形状，代码在update中可以通过animationCurve.Evaluate(Time.time)来实时获取该曲线当前的float value，这样就可以实现任何形式的曲线效果。
+
+vanilla version, code smell, boilerplate code vs template, overhead...
 
 Unity不支持多线程，你可以在自己的纯C#脚本里用多线程，但不能在monobehavior class里用多线程，因为多线程脚本是无法访问任何Unity的API的（因为Unity的API并不是线程安全的）。同时，在你的纯C#脚本里，也要小心保证用到的都是.net的线程安全的函数。这是不是代表Unity很没有效率？不是：
 Unity的内部还是有很多地方用到多线程的，比如scheduling，job system，audio，网络通讯，mesh skinner等等，只不过Unity不允许开发者在与Mono相关的game-level的代码中使用多线程，这是为了保证Unity内部的多线程状态稳定。但我们其实还是可以在纯C#脚本中使用多线程，比如可以用来跑后台的批处理什么的。实际中最常见的用例是：处理文件IO读写，处理网络通讯，计算pathfinding等等这些和mono独立的部分。这些功能如果要实现的话，完全不需要和Unity挂钩，而是应该做成单独的模块，在普通的.net solution里开发和测试好，再直接提供数据给Unity使用。
@@ -230,6 +232,8 @@ Unity.Mathematics一定要配合Burst使用，单独用的话比mono还要慢。
 如果发现animation的transition很奇怪，人物的脑袋会变形，那是因为你的animator里指定了mechanim的controller。用Animancer的时候，要确保animator里的controller为None(Runtime Controller)才可以。
 
 当你发现某些运动的物体和player交互的过程中出现了jittery，有几个点可以检查。首先如果它是通过animation运动的，检查一下animation的Update Mode是否正确，可能要用AnimatePhysics选项，或者对于UI物体要用unscaledTime选项。再者，看一下它的刚体是否开启了interpolate，如果没有的话，当physX和玩家update的fps速度不一致时总会出现jittery。
+
+Random.insideUnitSphere  Random.rotation
 
 kinematic animated的物体是没有速度的，velocity永远为0，尽管它们在运动。所以必须手动计算，用deltaPosition和deltaTime做除法。非kinematic的运动物体，是由physX控制的，我们总是可以通过刚体访问到它的velocity属性。
 
