@@ -1,5 +1,3 @@
-找工作时，去掉没用的金融内容，补上游戏的，比如说自己对GPU如何如何了解，对compute shader非常熟练，HLSL经验丰富，在写parallel算法方面有扎实的基础。把technical skills那一栏精简化成更pro的形式，不要写什么proficient in experience with之类的修饰词，直接列举就好了，比如programming languages: Oracle PL/SQL, Python, C#, Go, Lua, C，按熟练程度排序。Go+Lua现在开始学。
-
 1. Mark and highlight the whole Unity Manual = twice! twice!
 2. overview and skim all scripts in the Unitywiki scripts section, also highlight
 3. 整理github utilities的library
