@@ -34,8 +34,22 @@ namespace Players {
         // [SerializeField, Range(1, 3)] private int maxCombo = 3;
         // [SerializeField, Range(0, 1)] private float criticalHitRate = 0.05f;
         
+        // [HorizontalLine(1, EColor.Orange)]
         // [Header("Auto Motion States")]  // motion states in auto mode, including blend shapes
+
+        [HorizontalLine(1, EColor.Green)]
+        [Header("Inverse Kinematics (Look At)")]
+        [SerializeField] private Transform lookAtTarget;
+        [SerializeField, Range(0, 1)] private float weight = 1;
+        [SerializeField, Range(0, 1)] private float bodyWeight = 0.3f;
+        [SerializeField, Range(0, 1)] private float headWeight = 0.6f;
+        [SerializeField, Range(0, 1)] private float eyesWeight = 1;
+        [SerializeField, Range(0, 1)] private float clampWeight = 0.5f;
         
+        [HorizontalLine(1, EColor.Pink)]
+        [Header("Inverse Kinematics (Foot IK)")]
+        [SerializeField, Range(0, 1)] private float notUsedWeight = 1;
+
         // public properties
         public AnimancerComponent Animancer => animancer;
         public StateMachine<MotionState> StateMachine { get; private set; }
@@ -63,6 +77,9 @@ namespace Players {
         
         // private variables
         private StateMachine<MotionState>.InputBuffer _inputBuffer;
+        private Animator _animator;
+        private Transform _leftFoot;
+        private Transform _rightFoot;
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         
@@ -70,6 +87,12 @@ namespace Players {
             StateMachine = new StateMachine<MotionState>(idle);
             ForceEnterIdleState = () => StateMachine.ForceSetState(idle);
             _inputBuffer = new StateMachine<MotionState>.InputBuffer(StateMachine);
+
+            _animator = animancer.Animator;
+            animancer.Layers[0].ApplyAnimatorIK = true;
+            
+            _leftFoot = _animator.GetBoneTransform(HumanBodyBones.LeftFoot);
+            _rightFoot = _animator.GetBoneTransform(HumanBodyBones.RightFoot);
         }
 
         public void UpdateStateMachine(bool forceEnterState = false) {
@@ -100,6 +123,20 @@ namespace Players {
             // accumulate root motion from the animator
             RootMotionDeltaPosition += animancer.Animator.deltaPosition;
             RootMotionDeltaRotation = animancer.Animator.deltaRotation * RootMotionDeltaRotation;
+        }
+        
+        // due to limitations in the Playables API, Unity will always call this method with layerIndex = 0
+        private void OnAnimatorIK(int layerIndex) {
+            // look at
+            _animator.SetLookAtWeight(weight, bodyWeight, headWeight, eyesWeight, clampWeight);
+            _animator.SetLookAtPosition(lookAtTarget.transform.position);
+
+            // foot ik (manually calculate)
+            _animator.SetIKPositionWeight(AvatarIKGoal.LeftFoot, 1);
+            _animator.SetIKRotationWeight(AvatarIKGoal.LeftFoot, 1);
+
+            _animator.SetIKPosition(AvatarIKGoal.LeftFoot, transform.position);
+            _animator.SetIKRotation(AvatarIKGoal.LeftFoot, transform.rotation);
         }
     }
 }

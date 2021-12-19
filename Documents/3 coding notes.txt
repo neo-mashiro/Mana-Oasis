@@ -14,6 +14,11 @@ Instead of Time.time, use Time.unscaledTime?
 Unity manual says that we should avoid using Time.time per frame, but this is wrong. Feel free to use it, there are no performance issues, and everybody else is using it. In fact we don't have another property to use. At least, Time.time is better than timeSinceLevelLoad.
 
 UI.Button是游戏中UI的button，UIElements.Button是Unity Editor本身的button。做UI时，我们访问的都是UI下面的东西，只有在写Unity编辑器界面本身的扩展时，才需要用UIElements，这两个不要混淆。
+从UI.Button获取它下面的child的TextMeshPro component，要用GetComponentInChildren<TextMeshProUGUI>()，而不是GetComponentInChildren<TextMeshPro>()。TextMeshPro不知道是什么class，但我们要用的都是TextMeshProUGUI这个class。
+当你click一个button的时候，该button被选中，即使松开鼠标或移到外面，这个button还是保持着被select的状态，需要在其他空白处再点击才能取消它的选中状态。这是因为你的button的navigation默认设为了automatic模式，改成None就好了（松开鼠标就不会保持select状态）。
+
+当你操纵mesh的时候，记得Mesh.vertices.Length非常慢，这个Mesh.vertices.Length很蠢，它会对vertices数组的每个元素做一次copy，不知道为什么Unity是这样做的。所以需要用mesh的长度时，提前一次性获取长度并cache到变量里。
+当我们访问mesh.vertices, mesh.triangles等等时，我们得到的都是一个copy的数组，对于大的mesh这个copy是很慢的，尤其当你需要每帧都这样。mesh的这几个properties并不是很有效率，因为它们的默认getter和setter比较复杂。如果需要访问或修改这些properties的值，不要直接用mesh.vertices, mesh.triangles去做，一定要用对应的GetXXX和SetXXX方法，比如mesh.GetVertices(), mesh.SetColors()。对于SetXXX方法，它接收一个List或数组作为参数，这个数组可能是很大的，所以要尽可能的cache这个数组，不要每帧都new一个数组传进去，否则编译器的gc压力会非常大。
 
 Mathf.PerlinNoise(float x, float y)对于相近的input会产生相近的output随机数，所以局部相邻的位置就看上去是连续的。可以把x,y看作是图上的一个pixel的坐标位置，相近的pixel就会有连续的值。但其实这个函数的input必须是小数，对于整数的input比如2.0和3.00这种，返回值是固定的，就不会有连续的效果。PerlinNoise的input被称作sample，因为你不会只调一次这个函数，而是连续不断的输入相近的input去调它，得到连续的噪音系列，所有的这堆input共同构成了一组sample，sample可以是一个数组，一个代表texture的二维矩阵，甚至是三维四维的超立方体。
 Unity只提供了二维的这个函数，用于模拟二维平面上的perlin噪音，可以用来生成随机texture，比如做procedural的地形之类的。三维的怎么做不知道，比较困难。一维的很简单，只要固定input的其中一个，只变化另一个就可以了，比如固定x sample的值为0，变化y sample的值，那么相近的y值就会产生一系列看上去连续的随机数，在单个axis上模拟随机效果。考虑一个相机的shake，如果每一帧的input都非常接近，只相差0.01比如，生成的随机数也非常接近，那么只有当时间过的足够久，经过了很多帧，新的input相对于最开始的input才会有显著的差别，生成的随机数才会有显著的差别，也就是变化非常平缓smooth，模拟动画效果的话就是超慢动作；反过来如果每帧input差别较大，每帧的随机数也差别很大，那么动画每帧都在颤抖着变化position，但这样看上去动作就不再是连续的了，就失去了用perlin噪音的意义。因此，调整到合适的frequency非常关键，要让input每次变化相近，但又不是太接近，才能同时保证平滑连续和正常的动作速率。

@@ -76,6 +76,7 @@ GetManaTime获取一天的时间段，如早晚中午等，根据这个时间段
 when level/scene changes such as the player goes thru a portal, fade out the current game view, then switch to a UI canvas with progress bar, then fade in the new game view. use a script to control fading effect. Using coroutines。
 
 MUSIC没有版权没关系，做成可以让玩家自行选择本地音乐文件的形式，每个人对于每个场景最适合什么音乐可能有不同的偏好，这样让他们自己去匹配自己最喜欢的场景氛围。ofc, the player has the option to choose if to play the music in a scene or not, there's gonna be a play/stop button. 至于我自己的版本，我发给其他朋友和测试者邀请他们一起玩的版本，由我自己事先选好音乐，这样不构成侵权，只属于私用，但要明确告知对方不可以在网上进行发布。
+在游戏中runtime时选择本地音乐文件，弹出一个选择窗口，需要访问OS的fileSystem，这个是取决于平台的，比较难做，还好有现成的包，记得用Github收藏的Unity Standalone File Browser这个package。
 MUSIC还有个办法，利用AI自动编曲，需要用到音乐人工智能的知识，具体到时候参考知乎收藏的文章学习一下，然后去咨询相关专业的答主，看能不能用现成的API或自己训练个模型，只要把我想用的原曲feed给这个模型，模型就会自动生成一段相同曲风的BGM（无法逆向工程的，这样就没人知道原曲是什么，不涉及任何版权问题，其实也可以在游戏里列出来原曲列表给玩家参考）
 MUSIC的播放由场景自动触发，进入则开始播放，同时在画面右上角以“大图书馆的牧羊人”相同的方式，在一个半透明小文字框里显示当前所播放的曲目名称。
 
